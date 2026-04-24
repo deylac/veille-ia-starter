@@ -1,0 +1,9 @@
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+startCommand = "python main.py"
+restartPolicyType = "NEVER"
+# Cron : 4h UTC = 6h Paris en heure d'été (UTC+2), 5h Paris en hiver (UTC+1).
+# Brice veut 6h Paris. Décalage d'1h acceptable en hiver.
+cronSchedule = "0 4 * * *"

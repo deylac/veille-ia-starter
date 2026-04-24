@@ -1,0 +1,35 @@
+# Env
+.env
+.env.local
+
+# Data locale (images locales, cache seen_urls)
+data/
+
+# Gmail OAuth : on commit dans le repo PRIVÉ pour que Railway puisse se connecter.
+# Le refresh_token permet de régénérer l'access_token automatiquement.
+# IMPORTANT : publier l'app Google Cloud en "In Production" pour éviter l'expiration
+# du refresh_token au bout de 7 jours (mode Testing).
+# Si le repo devient public un jour, décommente ces lignes ET regénère les tokens :
+# config/gmail_token.json
+# config/gmail_credentials.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db

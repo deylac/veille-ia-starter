@@ -13,6 +13,7 @@ from generation.openai_image import generate_images
 from pipeline.carousel_builder import build_carousel
 from pipeline.content_enrichment import enrich_news_content
 from pipeline.deduplicate import deduplicate, mark_as_seen
+from pipeline.editorial_director import direct_editorial
 from pipeline.score_viral import score_news
 from publish.notion_push import push_carousel_to_notion, push_to_notion
 from sources.newsletters import fetch_newsletter_news
@@ -59,8 +60,14 @@ def run() -> int:
 
     if not items:
         logging.info("Aucune news n'a passé le seuil viral")
-        # On marque quand même comme vues pour ne pas les rescorer demain
-        # (tu peux commenter cette ligne si tu préfères les revoir si elles deviennent populaires)
+        return 0
+
+    # 3.5. Direction éditoriale : cluster thématique, merge, angles variés, rejet HS
+    logging.info("--- Phase 3.5 : direction éditoriale ---")
+    items = direct_editorial(items)
+
+    if not items:
+        logging.warning("Le chef éditorial a tout rejeté, arrêt du pipeline")
         return 0
 
     # 4. Enrichissement contenu (web search Claude + JSON structuré pour infographie)

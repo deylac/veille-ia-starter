@@ -30,7 +30,7 @@ WEB_SEARCH_TOOL = {
 
 # Le prompt d'enrichissement ci-dessous est conçu pour produire un JSON
 # strictement conforme au template d'infographie magazine cyan.
-ENRICHMENT_PROMPT = """Tu es directeur éditorial pour un média francophone d'actualité IA.
+ENRICHMENT_PROMPT = """Tu es rédacteur éditorial pour un média francophone d'actualité IA.
 
 {audience}
 
@@ -42,6 +42,20 @@ Titre : {title}
 Résumé brut (peut être incomplet) : {summary}
 URL : {url}
 Angle éditorial proposé : {angle}
+
+ANGLE ÉDITORIAL IMPOSÉ (décidé par le chef éditorial en amont) :
+Type : {angle_type}
+Brief directeur : {brief}
+
+STRUCTURE ATTENDUE DES 6 BLOCS SELON L'ANGLE TYPE :
+- analyse_outil : 01 ce que c'est / 02 ce qui change / 03 cas d'usage indés / 04 vs concurrence / 05 limites / 06 à savoir avant d'adopter
+- tutoriel : 01 prérequis / 02 étape 1 / 03 étape 2 / 04 étape 3 / 05 astuce pro / 06 limite ou piège à éviter
+- decryptage : 01 ce qui est annoncé / 02 ce qu'on ne dit pas / 03 vrais gagnants / 04 vrais perdants / 05 zone grise / 06 ta lecture (take)
+- impact_business : 01 ce qui se passe / 02 pour qui c'est pertinent / 03 gain / économie chiffré / 04 nouveau flux de travail / 05 à surveiller / 06 action concrète à prendre
+- comparaison : 01 contexte / 02 A vs B critère 1 / 03 A vs B critère 2 / 04 quand préférer A / 05 quand préférer B / 06 verdict
+- debrief : 01 contexte / 02 annonce principale / 03 chiffres clés / 04 réactions du marché / 05 limites / 06 ce qui vient ensuite
+
+Respecte STRICTEMENT cet ordre et cette logique pour les 6 blocs. Le brief directeur ci-dessus oriente le fond ; la structure vient de l'angle type.
 
 ÉTAPE 1 — RECHERCHE WEB (obligatoire)
 Utilise l'outil web_search pour enrichir ton contexte. Fais 2 à 3 recherches ciblées :
@@ -143,6 +157,8 @@ def _enrich_one(client: Anthropic, item: NewsItem) -> dict[str, Any]:
         summary=item.summary[:5000],
         url=item.url,
         angle=item.editorial_angle or "(à déterminer)",
+        angle_type=item.editorial_angle_type or "analyse_outil",
+        brief=item.editorial_brief or "(brief libre, produit l'infographie la plus pertinente)",
     )
 
     response = client.messages.create(

@@ -22,15 +22,23 @@ Cron Railway 6 h Paris
   Claude Sonnet 4.6 : scoring viral 1-10 (top 10)
         |
         v
+  Chef éditorial : cluster thématique + angle différencié (3-6 items finaux)
+  angles possibles : analyse_outil, tutoriel, decryptage, impact_business,
+                     comparaison, debrief
+        |
+        v
   Claude + web_search : enrichissement (30+ sources web par news)
+  structure des 6 blocs adaptée à l'angle attribué
         |
         +---> OpenAI gpt-image-2 : infographies 1024x1536 style magazine cyan
         |
-        +---> Gemini 3 Pro Image : carrousel 1024x1280 (6-10 slides)
+        +---> Gemini 3 Pro Image : carrousel 1024x1280 (5-10 slides, titres FR)
         |
         v
   Notion : 1 page/infographie + 1 page/carrousel
 ```
+
+Le **chef éditorial** (ajouté en v2) garantit zéro doublon thématique et des angles variés : si 3 news parlent de "GPT-5.5", il décide soit de les fusionner en une synthèse `debrief`, soit de produire des infographies différentes avec angles radicalement distincts (par ex. `comparaison` avec le concurrent + `analyse_outil` sur le modèle seul + `tutoriel` sur un cas d'usage).
 
 ## Le flow d'installation en deux phases
 

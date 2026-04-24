@@ -24,6 +24,11 @@ class NewsItem:
     hook_fr: str = ""  # Hook LinkedIn suggéré en français
     editorial_angle: str = ""  # Angle éditorial proposé
 
+    # Direction éditoriale (rempli par editorial_director en phase 3.5)
+    editorial_angle_type: str = "analyse_outil"  # analyse_outil | tutoriel | decryptage | impact_business | comparaison | debrief
+    editorial_brief: str = ""  # directive courte qui oriente l'enrichissement des 6 blocs
+    merged_from_urls: list[str] = field(default_factory=list)  # URLs des news fusionnées si merge
+
     # Contenu structuré pour l'infographie (rempli par content_enrichment)
     structured_content: Optional[dict[str, Any]] = None
     web_sources: list[str] = field(default_factory=list)  # URLs des sources web utilisées

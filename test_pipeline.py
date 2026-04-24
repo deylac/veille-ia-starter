@@ -15,6 +15,7 @@ from config.settings import TZ
 from generation.openai_image import generate_images
 from pipeline.content_enrichment import enrich_news_content
 from pipeline.deduplicate import deduplicate
+from pipeline.editorial_director import direct_editorial
 from pipeline.score_viral import score_news
 from sources.newsletters import fetch_newsletter_news
 from sources.rss_official import fetch_rss_news
@@ -43,16 +44,25 @@ def main() -> None:
     # 2. Dédup
     items = deduplicate(items)
 
-    # 3. Scoring : on prend les top n
+    # 3. Scoring
     items = score_news(items)
-    items = items[:n]
-    logging.info(f"Sélection top {n} : {[it.title[:50] for it in items]}")
-
     if not items:
         logging.warning("Aucune news sélectionnée. Stop.")
         return
 
-    # 4. Enrichissement (web search Claude + JSON structuré)
+    # 3.5. Direction éditoriale (cluster + angle + merge)
+    items = direct_editorial(items)
+    items = items[:n]  # on limite après le chef édito pour voir le merge à l'œuvre
+    logging.info(
+        f"Sélection top {n} après chef édito : "
+        f"{[(it.title[:40], it.editorial_angle_type) for it in items]}"
+    )
+
+    if not items:
+        logging.warning("Aucune news après chef édito. Stop.")
+        return
+
+    # 4. Enrichissement (web search Claude + JSON structuré, respecte l'angle)
     items = enrich_news_content(items)
 
     # Affichage du JSON structuré

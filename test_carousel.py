@@ -17,6 +17,7 @@ import sys
 from generation.gemini_carousel import generate_carousel_images
 from pipeline.carousel_builder import build_carousel
 from pipeline.deduplicate import deduplicate
+from pipeline.editorial_director import direct_editorial
 from pipeline.score_viral import score_news
 from publish.notion_push import push_carousel_to_notion
 from sources.newsletters import fetch_newsletter_news
@@ -44,14 +45,15 @@ def main() -> None:
         logging.warning("Aucune news, stop.")
         return
 
-    # 2. Dédup + scoring (rapide, on a besoin des scores pour classer les slides)
+    # 2. Dédup + scoring + chef éditorial (pour avoir des titres FR propres
+    #    et éviter les doublons thématiques sur le carrousel)
     items = deduplicate(items)
     items = score_news(items)
     if not items:
         logging.warning("Aucune news n'a passé le seuil.")
         return
-
-    logging.info(f"Top {len(items)} news qualifiées")
+    items = direct_editorial(items)
+    logging.info(f"Top {len(items)} news après chef éditorial")
 
     # 3. Construction + génération du carrousel
     carousel = build_carousel(items)

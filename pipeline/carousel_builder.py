@@ -45,12 +45,19 @@ def build_carousel(items: List[NewsItem]) -> dict[str, Any]:
 
     slides: list[dict[str, Any]] = []
     for i, item in enumerate(sorted_items, start=1):
+        sc = item.structured_content or {}
+        # On privilégie le titre FR issu de l'enrichissement (après chef éditorial
+        # + content_enrichment). item.title est la version propre en FR après merge
+        # éditorial. sc.get("titre") est la version en MAJUSCULES destinée à
+        # l'infographie — pour le carrousel on préfère le titre normal.
+        title_fr = item.title or sc.get("titre") or ""
+        # Hook : sous-titre FR si dispo, sinon angle éditorial du scoring
+        hook_fr = sc.get("sous_titre") or item.editorial_angle or item.hook_fr or ""
         slides.append({
             "type": "news",
             "numero": f"{i:02d}/{n:02d}",
-            "source": item.source[:40],
-            "title": item.title[:80],
-            "hook": (item.editorial_angle or item.hook_fr or "")[:140],
+            "title": title_fr[:80],
+            "hook": hook_fr[:140],
             "stat": _extract_stat(item),
             "score": item.viral_score or 0,
         })

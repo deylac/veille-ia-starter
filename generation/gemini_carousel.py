@@ -54,8 +54,10 @@ NEWS_PROMPT = """A premium editorial Instagram carousel slide, portrait 4:5 rati
 
 FULL BLEED: warm cream #F5F0E8 background edges to all four corners. No white border anywhere.
 
+LANGUAGE RULE, NON-NEGOTIABLE: all rendered text on the slide is EXCLUSIVELY in French. Use only the exact French strings provided in {TITLE} and {HOOK}. Never render English text, never render the original newsletter title. All French accents must be preserved perfectly (é è ê ë à â ç ï î ô û ù).
+
 LAYOUT for this NEWS slide:
-- Top ~10%: the slide number "{NUMERO}" in small cyan #5CE1E6 italic serif at top-left, and the source "{SOURCE}" in small black uppercase letter-spaced at top-right.
+- Top ~10%: the slide number "{NUMERO}" in small cyan #5CE1E6 italic serif at top-left. The top-right area of the header zone is INTENTIONALLY EMPTY: no text, no badge, no source name, no icon, nothing. Leave only cream background there.
 - A thin horizontal cyan #5CE1E6 line below (1 px), full width minus 50-64 px margins.
 - Middle ~55%: a large heavy serif ALL CAPS title, black #1A1A1A, max 3 lines, tight tracking. Render EXACTLY: "{TITLE}"
 - ~15% below title: the editorial hook in medium sans-serif black, 2-3 lines max, with NO ALL CAPS. Render EXACTLY: "{HOOK}"
@@ -64,7 +66,7 @@ LAYOUT for this NEWS slide:
 
 COLORS (strict): cream #F5F0E8 background, cyan #5CE1E6 accent, black #1A1A1A text, white #FFFFFF for the stat card only.
 TYPOGRAPHY: heavy serif (Tiempos Headline Black style) for the title, clean sans-serif (Söhne style) for hook and labels.
-FORBIDDEN: no photo, no 3D, no emoji, no gradient, no shadow, no em dash, no missing French accents.
+FORBIDDEN: no photo, no 3D, no emoji, no gradient, no shadow, no em dash, no missing French accents, no English text, no source/newsletter name anywhere.
 
 STAT INFO (only render the stat card if present): {STAT_CARD_INSTRUCTIONS}
 
@@ -143,7 +145,6 @@ def _build_news_prompt(slide: dict[str, Any]) -> str:
     )
     return (
         NEWS_PROMPT.replace("{NUMERO}", slide.get("numero", ""))
-        .replace("{SOURCE}", slide.get("source", ""))
         .replace("{TITLE}", slide.get("title", ""))
         .replace("{HOOK}", slide.get("hook", ""))
         .replace("{STAT}", stat or "")

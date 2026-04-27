@@ -1,13 +1,15 @@
-# Veille IA — Ton pipeline automatique de veille IA quotidienne
+# Veille — Ton pipeline automatique de veille quotidienne (sur n'importe quel sujet)
 
-Chaque matin à 6 h, ton bot récupère les news IA les plus importantes du jour et les transforme automatiquement en :
+Chaque matin à 6 h, ton bot récupère les news les plus importantes du jour **sur le sujet de ton choix** (IA, marketing, crypto, design, lifestyle, finance, etc.) et les transforme automatiquement en :
 
 - **Des infographies éditoriales premium** (style magazine print) — une par news
 - **Un carrousel Instagram** (cover + slides news + outro) — un par jour
 
 Tout arrive dans ta base Notion, prêt à valider et publier sur LinkedIn / Instagram.
 
-Tu paies tes propres APIs (~70 €/mois pour ~10 infographies + 1 carrousel par jour). Le code tourne sur TON Railway, avec TES clés. Zéro dépendance, zéro abonnement SaaS à vie.
+> 🎯 **Pas un produit "veille IA" verrouillé** : ce starter fournit le pipeline et une configuration par défaut sur l'IA, mais Claude Code te demande pendant l'onboarding (`/onboard`) sur quel sujet tu veux faire ta veille, puis adapte les sources, prompts et wording automatiquement.
+
+Tu paies tes propres APIs (~25-45 €/mois pour 1-3 infographies + 1 carrousel par jour). Le code tourne sur TON Railway, avec TES clés. Zéro dépendance, zéro abonnement SaaS à vie.
 
 ## Comment ça marche
 
@@ -15,8 +17,9 @@ Tu paies tes propres APIs (~70 €/mois pour ~10 infographies + 1 carrousel par 
 Cron Railway 6 h Paris
         |
         v
-  RSS officiels (Anthropic, OpenAI, Google, DeepMind, Mistral, HF)
-  Newsletters IA (Gmail API)
+  RSS officiels (configurables — par défaut RSS IA, à adapter à ton sujet)
+  Newsletters par email (configurables — Gmail API)
+  Reddit (subreddits configurables, optionnel)
         |
         v
   Claude Sonnet 4.6 : scoring viral 1-10 (top 10)

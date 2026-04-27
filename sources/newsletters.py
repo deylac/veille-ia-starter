@@ -1,7 +1,8 @@
-"""Scan des newsletters IA via Gmail API.
+"""Scan des newsletters thématiques via Gmail API.
 
-Pour la mise en place, voir NOTION_SETUP.md (section Gmail).
-On utilise OAuth2 avec un refresh token persistant.
+Liste des expéditeurs surveillés : config/settings.py:NEWSLETTER_SENDERS.
+Adapte cette liste à ton sujet (newsletters IA, marketing, crypto, etc.).
+Pour la mise en place OAuth, voir NOTION_SETUP.md (section Gmail).
 """
 import base64
 import logging

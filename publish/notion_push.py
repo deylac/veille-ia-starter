@@ -16,14 +16,14 @@ from supabase import Client as SupabaseClient
 from supabase import create_client
 
 from config.models import NewsItem
-from config.settings import NOTION_API_KEY, NOTION_DATABASE_ID, TZ
+from config.settings import BRAND_NAME, NOTION_API_KEY, NOTION_DATABASE_ID, TZ
 
 logger = logging.getLogger(__name__)
 
 # Supabase pour héberger les images
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "")  # service key, pas anon
-SUPABASE_BUCKET = os.getenv("SUPABASE_BUCKET", "veille-ia-images")
+SUPABASE_BUCKET = os.getenv("SUPABASE_BUCKET", "veille-images")
 
 
 def push_to_notion(items: List[NewsItem]) -> int:
@@ -99,7 +99,7 @@ def push_carousel_to_notion(slide_paths: list[str], carousel_meta: dict) -> bool
         "Titre": {
             "title": [{"text": {"content": f"Carrousel du {date_short} — {date_long}"[:2000]}}],
         },
-        "Source": {"select": {"name": "Veille IA"}},
+        "Source": {"select": {"name": BRAND_NAME[:100]}},
         "Score viral": {"number": 10},  # Un carrousel = top du top
         "Format utilisé": {"select": {"name": "carrousel"}},
         "Type de document": {"select": {"name": "carrousel"}},

@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 FORMAT_DESCRIPTIONS = {
     "annonce": (
         "Annonce produit ou feature : nouveau modèle, nouvelle fonctionnalité, "
-        "lancement officiel d'un acteur de l'IA. Visuel centré sur le nom du produit "
+        "lancement officiel d'un acteur du secteur. Visuel centré sur le nom du produit "
         "et 1 à 2 bénéfices clés."
     ),
     "stat": (
@@ -43,7 +43,7 @@ FORMAT_DESCRIPTIONS = {
 # Templates de prompts Gemini par format. Chaque template définit le style visuel,
 # les contraintes de design et les instructions précises pour Gemini 3 Pro Image.
 PROMPT_TEMPLATES = {
-    "annonce": """Crée une infographie carrée 1080x1080 au style éditorial moderne pour annoncer une news IA.
+    "annonce": """Crée une infographie carrée 1080x1080 au style éditorial moderne pour annoncer une news.
 
 Style visuel :
 - Fond sombre (deep navy ou near-black) avec léger grain texturé
@@ -105,7 +105,7 @@ Titre : {author_title}
 
 La citation doit être affichée TEXTUELLEMENT sans modification. Texte parfait, sans faute. Design éditorial premium.""",
 
-    "versus": """Crée une infographie carrée 1080x1080 type "versus" pour comparer deux entités IA.
+    "versus": """Crée une infographie carrée 1080x1080 type "versus" pour comparer deux entités.
 
 Style visuel :
 - Fond divisé en deux moitiés (verticales ou diagonales), couleurs contrastées par marque
@@ -140,7 +140,7 @@ def select_format_and_build_prompts(items: List[NewsItem]) -> List[NewsItem]:
     formats_text = "\n".join(f"- {name} : {desc}" for name, desc in FORMAT_DESCRIPTIONS.items())
 
     for item in items:
-        prompt = f"""Tu es un directeur artistique pour du contenu social media IA.
+        prompt = f"""Tu es un directeur artistique pour du contenu social media.
 
 Voici une news à transformer en visuel. Tu dois :
 1. Choisir le format visuel le plus adapté parmi 4 options

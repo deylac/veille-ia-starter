@@ -2,7 +2,7 @@
 
 Réutilise les news déjà scorées (Phase 3) et enrichies (Phase 4) pour produire
 la liste de slides à générer par Gemini :
-- 1 slide COVER : "Les N actus IA du JJ/MM"
+- 1 slide COVER : "Les N actus {TOPIC_NAME} du JJ/MM"
 - N slides NEWS : 1 par news, avec numéro "01/N", titre, hook, stat clé
 - 1 slide OUTRO : "Sauvegardez et partagez"
 
@@ -13,7 +13,7 @@ from datetime import datetime
 from typing import Any, List
 
 from config.models import NewsItem
-from config.settings import TZ
+from config.settings import BRAND_NAME, TOPIC_NAME, TZ
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ def build_carousel(items: List[NewsItem]) -> dict[str, Any]:
 
     cover = {
         "type": "cover",
-        "title_main": f"LES {n} ACTUS IA",
+        "title_main": f"LES {n} ACTUS {TOPIC_NAME.upper()}",
         "title_sub": f"DU JOUR",
         "date": date_long_fr,  # "23 AVRIL 2026"
         "hook": f"Les news qui vont changer votre {_profession_target()} aujourd'hui.",
@@ -66,7 +66,7 @@ def build_carousel(items: List[NewsItem]) -> dict[str, Any]:
         "type": "outro",
         "title_main": "SAUVEGARDEZ",
         "title_sub": "ET PARTAGEZ",
-        "hook": "Retrouvez la veille IA chaque matin.",
+        "hook": f"Retrouvez {BRAND_NAME} chaque matin.",
         "date": date_short,
     }
 

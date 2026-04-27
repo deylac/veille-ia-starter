@@ -17,7 +17,7 @@ from typing import Any, List
 from anthropic import Anthropic
 
 from config.models import NewsItem
-from config.settings import ANTHROPIC_API_KEY, AUDIENCE_DESCRIPTION, CLAUDE_MODEL
+from config.settings import ANTHROPIC_API_KEY, AUDIENCE_DESCRIPTION, CLAUDE_MODEL, TOPIC_DESCRIPTION, TOPIC_NAME
 from observability.api_logger import log_api_call
 
 logger = logging.getLogger(__name__)
@@ -32,11 +32,11 @@ WEB_SEARCH_TOOL = {
 
 # Le prompt d'enrichissement ci-dessous est conçu pour produire un JSON
 # strictement conforme au template d'infographie magazine cyan.
-ENRICHMENT_PROMPT = """Tu es rédacteur éditorial pour un média francophone d'actualité IA.
+ENRICHMENT_PROMPT = """Tu es rédacteur éditorial pour un média francophone d'actualité {topic_description}.
 
 {audience}
 
-Voici une news IA à transformer en infographie magazine éditoriale.
+Voici une news à transformer en infographie magazine éditoriale.
 
 NEWS :
 Source : {source}
@@ -163,6 +163,7 @@ def _enrich_one(client: Anthropic, item: NewsItem) -> dict[str, Any]:
     """Appelle Claude avec web_search puis parse le JSON structuré."""
     prompt = ENRICHMENT_PROMPT.format(
         audience=AUDIENCE_DESCRIPTION,
+        topic_description=TOPIC_DESCRIPTION,
         source=item.source,
         title=item.title,
         summary=item.summary[:5000],
@@ -321,7 +322,7 @@ def _fallback_content(item: NewsItem) -> dict[str, Any]:
         "sous_titre": (item.editorial_angle or item.title)[:90],
         "keywords_cyan": [],
         "stat": "NOUVEAU",
-        "stat_desc": "Actualité IA du jour",
+        "stat_desc": f"Actualité {TOPIC_NAME} du jour",
         "blocs": [
             {
                 "numero": "01",
@@ -329,7 +330,7 @@ def _fallback_content(item: NewsItem) -> dict[str, Any]:
                 "points": [
                     item.title[:60],
                     item.source[:60],
-                    "Actualité IA du jour",
+                    f"Actualité {TOPIC_NAME} du jour",
                     "Voir source pour détails",
                 ],
                 "exemple": "",

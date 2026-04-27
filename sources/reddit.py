@@ -1,4 +1,4 @@
-"""Scan des subreddits IA pertinents."""
+"""Scan des subreddits pertinents pour ton sujet (configuré dans config/settings.py:SUBREDDITS)."""
 import logging
 from datetime import datetime, timedelta, timezone
 from typing import List
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 def fetch_reddit_news() -> List[NewsItem]:
-    """Récupère les top posts récents des subreddits IA."""
+    """Récupère les top posts récents des subreddits configurés."""
     if not REDDIT_CLIENT_ID or not REDDIT_CLIENT_SECRET:
         logger.warning("Reddit non configuré (clés manquantes), skip")
         return []

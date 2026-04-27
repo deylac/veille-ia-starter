@@ -102,7 +102,7 @@ Vérifie ensuite dans Table Editor que les 2 tables apparaissent. Le prochain ru
 
 ### Le script `setup_cost_report_page.py` ou `setup_daily_report_page.py` échoue
 - Vérifie `NOTION_PARENT_PAGE_ID` dans `.env` (32 chars sans tirets, copié depuis l'URL de ta page parente)
-- Vérifie que ton intégration Notion est partagée sur cette page parente : ⋯ → Connections → Veille IA Bot
+- Vérifie que ton intégration Notion est partagée sur cette page parente : ⋯ → Connections → Veille Bot
 - Si l'erreur persiste, recopie l'ID en enlevant tout caractère parasite
 
 ### Les pages "Coûts API" ou "Rapport quotidien" existent mais ne se mettent plus à jour
@@ -125,21 +125,21 @@ Si pas, vérifie que `railway.toml` est bien à la racine du projet et que `cron
 ### Le container tourne mais plante immédiatement
 Regarde les logs :
 ```bash
-railway logs -s veille-ia --lines 200 -d
+railway logs -s veille-bot --lines 200 -d
 ```
 Cherche la stacktrace. Causes fréquentes :
-- Variable d'env manquante → vérifie `railway variables -s veille-ia`
+- Variable d'env manquante → vérifie `railway variables -s veille-bot`
 - `gmail_token.json` pas committé → vérifie `.gitignore` (ne doit PAS exclure `config/gmail_token.json` pour un repo privé)
 
 ### Le déploiement ne redéploie pas après push GitHub
 Railway n'est pas encore lié au repo GitHub (on a utilisé `railway up` local). Pour connecter GitHub :
-- Dashboard Railway → service `veille-ia` → Settings → Source → Connect Repo
+- Dashboard Railway → service `veille-bot` → Settings → Source → Connect Repo
 - Sélectionne `ton-user/veille-ia` → Main branch
 
 ## Erreurs de fond
 
 ### Le bot ne trouve pas de news qualifiées (viral_score < 7)
-- Tu n'as pas encore reçu de newsletters IA dans ta boîte Gmail → attends 24-48h
+- Tu n'as pas encore reçu de newsletters de ton sujet dans ta boîte Gmail → attends 24-48h
 - Ou ajuste `MIN_VIRAL_SCORE = 6` dans `config/settings.py` pour être moins sélectif
 
 ### Le cache de dedup filtre tout

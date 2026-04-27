@@ -97,7 +97,7 @@ def _load_seen_urls() -> dict:
     """Charge le cache depuis Supabase (prioritaire) ou fichier local (fallback)."""
     sb = _supabase_client()
     if sb:
-        bucket = os.getenv("SUPABASE_BUCKET", "veille-ia-images")
+        bucket = os.getenv("SUPABASE_BUCKET", "veille-images")
         try:
             data = sb.storage.from_(bucket).download(SEEN_URLS_STORAGE_NAME)
             content = json.loads(data.decode("utf-8"))
@@ -123,7 +123,7 @@ def _save_seen_urls(seen: dict) -> None:
 
     sb = _supabase_client()
     if sb:
-        bucket = os.getenv("SUPABASE_BUCKET", "veille-ia-images")
+        bucket = os.getenv("SUPABASE_BUCKET", "veille-images")
         try:
             sb.storage.from_(bucket).upload(
                 path=SEEN_URLS_STORAGE_NAME,

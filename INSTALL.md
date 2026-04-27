@@ -97,7 +97,7 @@ NOTION_API_KEY=ntn_xxxxxxxxx
 NOTION_DATABASE_ID=34b76dcb9c4e803b9a13e75049aa7b8e
 SUPABASE_URL=https://xxxxxxxxx.supabase.co
 SUPABASE_SERVICE_KEY=eyJxxxxxxx
-SUPABASE_BUCKET=veille-ia-images
+SUPABASE_BUCKET=veille-images
 ```
 
 ## 5. Créer la database Notion
@@ -110,7 +110,7 @@ Dans ton workspace Notion :
 1. Créer une nouvelle page vierge
 2. Taper `/database` → choisir "Table - Inline"
 3. Ajouter les 11 propriétés listées dans [ACCOUNTS_CHECKLIST.md — Notion](ACCOUNTS_CHECKLIST.md#4-notion--10-min)
-4. Partager la database avec l'intégration "Veille IA Bot"
+4. Partager la database avec l'intégration "Veille Bot"
 5. Copier le DATABASE_ID depuis l'URL → le coller dans `.env`
 
 ### Option B — Via script (rapide, zéro typo)
@@ -134,7 +134,7 @@ headers = {
 
 body = {
     "parent": {"type": "page_id", "page_id": PARENT_PAGE_ID},
-    "title": [{"type": "text", "text": {"content": "Veille IA"}}],
+    "title": [{"type": "text", "text": {"content": "[Ma Veille]"}}],
     "is_inline": True,
     "properties": {
         "Titre": {"title": {}},
@@ -257,7 +257,7 @@ Clique **Run** pour chacune. Vérifie dans Table Editor que les 2 tables apparai
 
 ### 7.2 Récupérer l'ID de la page Notion parente
 
-Crée (ou identifie) la page Notion qui hébergera les 2 sous-pages. Partage-la avec ton intégration "Veille IA" (⋯ → Connections → Veille IA). Copie son ID (32 chars dans l'URL) dans `.env` :
+Crée (ou identifie) la page Notion qui hébergera les 2 sous-pages. Partage-la avec ton intégration "Veille Bot" (⋯ → Connections → Veille IA). Copie son ID (32 chars dans l'URL) dans `.env` :
 
 ```bash
 NOTION_PARENT_PAGE_ID=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -322,7 +322,7 @@ railway login
 ### 8.2 Créer le projet
 
 ```bash
-railway init --name veille-ia
+railway init --name veille-bot
 ```
 
 Choisis ton workspace personnel.
@@ -330,10 +330,10 @@ Choisis ton workspace personnel.
 ### 8.3 Créer un service
 
 ```bash
-railway add --service veille-ia
+railway add --service veille-bot
 ```
 
-Sélectionne "Empty Service" quand demandé, nom : `veille-ia`.
+Sélectionne "Empty Service" quand demandé, nom : `veille-bot`.
 
 ### 8.4 Pousser les variables d'environnement
 
@@ -346,14 +346,14 @@ while IFS='=' read -r key value; do
   [[ "$key" == "REDDIT_CLIENT_ID" && -z "$value" ]] && continue
   [[ "$key" == "REDDIT_CLIENT_SECRET" && -z "$value" ]] && continue
   echo "Set $key"
-  railway variables --service veille-ia --set "$key=$value"
+  railway variables --service veille-bot --set "$key=$value"
 done < .env
 ```
 
 ### 8.5 Pousser le code
 
 ```bash
-railway up --service veille-ia --detach
+railway up --service veille-bot --detach
 ```
 
 Attends 2-3 min le build. Vérifie le statut :
@@ -380,7 +380,7 @@ Tu dois voir `'cronSchedule': '0 4 * * *'` dans la sortie.
 
 **IMPORTANT** : sans cette étape, ton `refresh_token` Gmail expire après 7 jours et le bot casse.
 
-- Aller sur https://console.cloud.google.com/ → ton projet `veille-ia`
+- Aller sur https://console.cloud.google.com/ → ton projet `veille-bot`
 - Menu ☰ → **APIs & Services** → **OAuth consent screen** (ou nouvelle UI : Google Auth Platform → Audience)
 - Chercher le bouton **Publish app** / **Passer en production**
 - Confirm

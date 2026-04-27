@@ -13,7 +13,7 @@ from typing import Any
 
 from notion_client import Client
 
-from config.settings import NOTION_API_KEY, TZ
+from config.settings import BRAND_NAME, NOTION_API_KEY, TZ
 from pipeline.run_report import RunReport
 
 logger = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ def create_daily_report_page(parent_page_id: str) -> str:
     notion = Client(auth=NOTION_API_KEY)
     response = notion.pages.create(
         parent={"page_id": parent_page_id},
-        properties={"title": {"title": [{"text": {"content": "🗞️ Rapport quotidien — Veille IA"}}]}},
+        properties={"title": {"title": [{"text": {"content": f"🗞️ Rapport quotidien — {BRAND_NAME}"}}]}},
     )
     page_id = response["id"]
     logger.info(f"Sous-page rapport quotidien créée : {page_id}")

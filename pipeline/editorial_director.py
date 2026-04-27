@@ -22,7 +22,7 @@ from typing import Any, List
 from anthropic import Anthropic
 
 from config.models import NewsItem
-from config.settings import ANTHROPIC_API_KEY, AUDIENCE_DESCRIPTION, CLAUDE_MODEL
+from config.settings import ANTHROPIC_API_KEY, AUDIENCE_DESCRIPTION, CLAUDE_MODEL, TOPIC_DESCRIPTION
 from observability.api_logger import log_api_call
 from pipeline.run_report import RunReport
 
@@ -42,7 +42,7 @@ VALID_ANGLE_TYPES = {
 MAX_FINAL_ITEMS = 6  # plafond dur sur le nombre d'infographies après merge
 
 
-EDITORIAL_PROMPT = """Tu es rédacteur en chef d'un média francophone d'actualité IA pour freelances, coachs et consultants indépendants.
+EDITORIAL_PROMPT = """Tu es rédacteur en chef d'un média francophone d'actualité {topic_description} pour freelances, coachs et consultants indépendants.
 
 {audience}
 
@@ -69,11 +69,11 @@ RÈGLES DE DÉCISION :
 3. EDITORIAL BRIEF : pour chaque infographie, rédige une phrase directrice (max 200 chars) qui guidera la création du contenu. Exemple :
    "Décrypter ce que ChatGPT Images 2.0 change concrètement pour les freelances : génération de visuels avec texte FR propre, carrousels cohérents, cas d'usage en une journée"
 
-4. REJET : écarte sans pitié les news qui ne collent pas à l'audience :
+4. REJET : écarte sans pitié les news qui ne collent pas à l'audience ou qui sortent du sujet "{topic_description}" :
    - Papers de recherche pure, résultats académiques
-   - News business pures non liées à l'usage IA (ex: Tim Cook era over chez Apple = HORS SUJET)
-   - News politiques/drama sans impact produit concret
-   - Sujets trop niche (ex: lib Python, framework dev pour ingé ML)
+   - News business / célébrités sans lien avec le sujet (HORS SUJET)
+   - News politiques / drama sans impact concret
+   - Sujets trop niche pour des experts pointus uniquement
 
 5. VARIÉTÉ : si deux news reçoivent le MÊME angle type, assure-toi qu'elles traitent de sujets RÉELLEMENT différents. Ne mets jamais 3 "analyse_outil" sur des sujets proches — varie.
 
@@ -125,6 +125,7 @@ def direct_editorial(items: List[NewsItem], report: RunReport | None = None) -> 
 
     prompt = EDITORIAL_PROMPT.format(
         audience=AUDIENCE_DESCRIPTION,
+        topic_description=TOPIC_DESCRIPTION,
         n=len(items),
         max_items=MAX_FINAL_ITEMS,
         news_text=news_text,

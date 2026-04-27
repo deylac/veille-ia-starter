@@ -1,4 +1,4 @@
-# Veille IA — Architecture & navigation
+# Veille (sujet configurable) — Architecture & navigation
 
 > Ce document est lu automatiquement par Claude Code à l'ouverture du repo.
 > Il est conçu pour qu'un LLM (ou un nouvel humain) comprenne l'app en 5 minutes
@@ -13,7 +13,7 @@ ce starter (= onboarding nécessaire) :
    comme « j'ai cloné le repo », « comment installer », « setup », « démarre
    l'onboarding », « help me install » → **propose immédiatement** :
 
-   > 👋 Tu viens de cloner Veille IA. Veux-tu que je te guide pas à pas
+   > 👋 Tu viens de cloner ce starter de veille automatisée. Veux-tu que je te guide pas à pas
    > pour tout configurer ? (~30 minutes la première fois)
    > Lance `/onboard` ou réponds "oui" et je commence.
 
@@ -33,9 +33,10 @@ Documentation complémentaire : `INSTALL.md`, `ACCOUNTS_CHECKLIST.md`,
 
 ## 1. Vue d'ensemble
 
-Pipeline Python quotidien qui transforme l'actualité IA en infographies + carrousels publiés sur Notion.
+Pipeline Python quotidien qui transforme l'actualité d'un sujet **(configurable via `TOPIC_NAME`)** en infographies + carrousels publiés sur Notion. Sujet par défaut : IA. Mais tu peux mettre Marketing, Crypto, Design, Finance, Lifestyle, etc.
 
-- **Audience** : freelances, coachs, consultants francophones (cf. `AUDIENCE_DESCRIPTION` dans `config/settings.py`)
+- **Sujet** : variable `TOPIC_NAME` dans `.env` (ou défaut "IA"). Voir aussi `TOPIC_DESCRIPTION` et `BRAND_NAME`.
+- **Audience** : freelances, coachs, consultants francophones (cf. `AUDIENCE_DESCRIPTION` dans `config/settings.py`, **personnalisable** par sujet)
 - **Déclencheur** : cron Railway tous les jours à 04h UTC (= 06h Paris été, 05h Paris hiver)
 - **Sortie** : 3 à 6 infographies + 1 carrousel Instagram poussés en base Notion
 - **Stack** : Python 3.11, Anthropic SDK, OpenAI SDK, google-genai, supabase-py, notion-client
@@ -130,6 +131,10 @@ au démarrage avec `load_dotenv(override=True)`.
 
 | Variable | Usage | Si absente |
 |---|---|---|
+| `TOPIC_NAME` | Nom court du sujet (ex: "IA", "Marketing"). Défaut : "IA" | défaut "IA" |
+| `TOPIC_DESCRIPTION` | Phrase pleine pour les prompts (ex: "marketing digital"). Défaut : "intelligence artificielle" | défaut "intelligence artificielle" |
+| `BRAND_NAME` | Marque visible (footer images, titre des sous-pages Notion). Défaut : "Veille {TOPIC_NAME}" | défaut "Veille IA" |
+| `AUDIENCE_DESCRIPTION` | Multi-ligne, calibre le scoring viral pour ton audience. Si vide, fallback générique | fallback générique |
 | `ANTHROPIC_API_KEY` | Claude Sonnet 4.6 (scoring, éditorial, enrichissement) | crash hard |
 | `OPENAI_API_KEY` | gpt-image-2 (génération infographies) | crash hard |
 | `GEMINI_API_KEY` | Gemini 3 Pro Image (carrousel + fallback infographie) | crash hard sur phase 7 |
@@ -207,7 +212,7 @@ git push origin main   # Railway redéploie auto, le cron toml gère 04:00 UTC
 ## 10. Setup initial
 
 - **Notion** : `NOTION_SETUP.md` (création base, intégration, propriétés)
-- **Supabase** : créer un bucket public `veille-ia-images`, puis appliquer dans
+- **Supabase** : créer un bucket public `veille-images`, puis appliquer dans
   le SQL editor :
   - `observability/migrations/001_api_calls.sql` (logs API)
   - `observability/migrations/002_daily_runs.sql` (rapports quotidiens)

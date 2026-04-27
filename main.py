@@ -1,13 +1,13 @@
-"""Point d'entrée du pipeline de veille IA.
+"""Point d'entrée du pipeline de veille (sujet configurable via TOPIC_NAME).
 
-Lancé par le cron Railway tous les jours à 7h00 (Europe/Madrid).
+Lancé par le cron Railway tous les jours à 6h00 Paris.
 Peut aussi être lancé manuellement : python main.py
 """
 import logging
 import sys
 from datetime import datetime
 
-from config.settings import NOTION_COST_REPORT_PAGE_ID, NOTION_DAILY_REPORT_PAGE_ID, TZ
+from config.settings import BRAND_NAME, NOTION_COST_REPORT_PAGE_ID, NOTION_DAILY_REPORT_PAGE_ID, TZ
 from generation.gemini_carousel import generate_carousel_images
 from generation.openai_image import generate_images
 from pipeline.carousel_builder import build_carousel
@@ -52,7 +52,7 @@ def _publish_reports(report: RunReport) -> None:
 def run() -> int:
     """Lance le pipeline complet. Retourne le nombre d'images créées en Notion."""
     start = datetime.now(TZ)
-    logging.info(f"=== Démarrage veille IA : {start.strftime('%Y-%m-%d %H:%M:%S %Z')} ===")
+    logging.info(f"=== Démarrage {BRAND_NAME} : {start.strftime('%Y-%m-%d %H:%M:%S %Z')} ===")
 
     # Collecteur d'événements pour le rapport quotidien Notion
     report = RunReport(start_time=start)

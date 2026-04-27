@@ -18,7 +18,7 @@ from google import genai
 from google.genai import types
 from PIL import Image
 
-from config.settings import DATA_DIR, GEMINI_API_KEY, GEMINI_IMAGE_MODEL
+from config.settings import BRAND_NAME, DATA_DIR, GEMINI_API_KEY, GEMINI_IMAGE_MODEL
 from observability.api_logger import log_api_call
 
 logger = logging.getLogger(__name__)
@@ -43,7 +43,7 @@ LAYOUT:
   Line 1: "{TITLE_MAIN}"
   Line 2: "{TITLE_SUB}"
 - Below title, ~20%: a horizontal cyan #5CE1E6 thin line (1 px), then the hook text in medium sans-serif, black, max 2 lines. Render EXACTLY: "{HOOK}"
-- Bottom ~10%: a thin horizontal cyan line, then centered "VEILLE IA" in small cyan uppercase letter-spaced.
+- Bottom ~10%: a thin horizontal cyan line, then centered "{BRAND_NAME_UPPER}" in small cyan uppercase letter-spaced.
 
 COLORS (strict): cream #F5F0E8 background, cyan #5CE1E6 accent, black #1A1A1A text. No other color.
 TYPOGRAPHY: heavy serif (Tiempos Headline Black style) for the title, clean sans-serif (Söhne style) for the hook.
@@ -64,7 +64,7 @@ LAYOUT for this NEWS slide:
 - Middle ~55%: a large heavy serif ALL CAPS title, black #1A1A1A, max 3 lines, tight tracking. Render EXACTLY: "{TITLE}"
 - ~15% below title: the editorial hook in medium sans-serif black, 2-3 lines max, with NO ALL CAPS. Render EXACTLY: "{HOOK}"
 - Right side (if STAT present, ~25% width): a vertical white #FFFFFF card with 1 px cyan border. Inside: micro cyan label "STAT" at top, large cyan #5CE1E6 number "{STAT}" in middle. Only render this card if STAT is not empty.
-- Bottom ~10%: a thin horizontal cyan line, then the text "VEILLE IA" in small cyan uppercase letter-spaced on the left, and the slide number indicator "{NUMERO}" in small black on the right.
+- Bottom ~10%: a thin horizontal cyan line, then the text "{BRAND_NAME_UPPER}" in small cyan uppercase letter-spaced on the left, and the slide number indicator "{NUMERO}" in small black on the right.
 
 COLORS (strict): cream #F5F0E8 background, cyan #5CE1E6 accent, black #1A1A1A text, white #FFFFFF for the stat card only.
 TYPOGRAPHY: heavy serif (Tiempos Headline Black style) for the title, clean sans-serif (Söhne style) for hook and labels.
@@ -135,6 +135,7 @@ def _build_cover_prompt(cover: dict[str, Any]) -> str:
         .replace("{TITLE_MAIN}", cover.get("title_main", ""))
         .replace("{TITLE_SUB}", cover.get("title_sub", ""))
         .replace("{HOOK}", cover.get("hook", ""))
+        .replace("{BRAND_NAME_UPPER}", BRAND_NAME.upper())
     )
 
 
@@ -151,6 +152,7 @@ def _build_news_prompt(slide: dict[str, Any]) -> str:
         .replace("{HOOK}", slide.get("hook", ""))
         .replace("{STAT}", stat or "")
         .replace("{STAT_CARD_INSTRUCTIONS}", stat_instructions)
+        .replace("{BRAND_NAME_UPPER}", BRAND_NAME.upper())
     )
 
 
@@ -160,6 +162,7 @@ def _build_outro_prompt(outro: dict[str, Any]) -> str:
         .replace("{TITLE_MAIN}", outro.get("title_main", ""))
         .replace("{TITLE_SUB}", outro.get("title_sub", ""))
         .replace("{HOOK}", outro.get("hook", ""))
+        .replace("{BRAND_NAME_UPPER}", BRAND_NAME.upper())
     )
 
 

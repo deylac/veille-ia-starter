@@ -1,7 +1,7 @@
 """À lancer UNE FOIS en local pour créer la sous-page Notion 'Rapport quotidien'.
 
 Étapes :
-1. Vérifier que NOTION_PARENT_PAGE_ID est dans .env (ID de "Veille IA Superproductif").
+1. Vérifier que NOTION_PARENT_PAGE_ID est dans .env (ID de la page parente).
 2. Vérifier que ton intégration Notion est partagée sur la page parente.
 3. Lancer : python setup_daily_report_page.py
 4. Copier l'ID affiché dans .env (et Railway) sous NOTION_DAILY_REPORT_PAGE_ID.

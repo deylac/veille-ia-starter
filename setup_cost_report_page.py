@@ -2,7 +2,7 @@
 
 Étapes :
 1. Vérifier que NOTION_PARENT_PAGE_ID est dans .env (ID de la page parente
-   où tu veux créer la sous-page — ex: ta page "Veille IA Superproductif").
+   où tu veux créer la sous-page — ex: la page racine de ton espace de veille).
 2. Vérifier que ton intégration Notion est partagée sur cette page parente.
 3. Lancer : `python setup_cost_report_page.py`
 4. Copier l'ID affiché et l'ajouter à ton .env comme NOTION_COST_REPORT_PAGE_ID

@@ -35,7 +35,7 @@ Gemini 3 Pro Image est gratuit jusqu'à une certaine limite (~50 requêtes/min).
 ### Créer l'intégration
 - [ ] Compte sur https://www.notion.so/ (si pas déjà)
 - [ ] Aller sur https://www.notion.so/profile/integrations
-- [ ] **+ New integration** → nom : `Veille IA Bot`, Type : **Internal**, workspace associé : ton workspace
+- [ ] **+ New integration** → nom : `Veille Bot`, Type : **Internal**, workspace associé : ton workspace
 - [ ] Capabilities : **Read content** + **Update content** + **Insert content**
 - [ ] Submit → copier l'**Internal Integration Secret** → `NOTION_API_KEY=ntn_...` (ou `secret_...`)
 
@@ -62,7 +62,7 @@ Si tu préfères le faire à la main, crée une nouvelle page Notion vierge, ajo
 
 ### Partager la database avec l'intégration
 - [ ] Ouvrir la database
-- [ ] Clic sur **...** en haut à droite → **Connections** → ajouter **Veille IA Bot**
+- [ ] Clic sur **...** en haut à droite → **Connections** → ajouter **Veille Bot**
 
 ### Récupérer le DATABASE_ID
 - [ ] Ouvrir la database en pleine page
@@ -70,10 +70,10 @@ Si tu préfères le faire à la main, crée une nouvelle page Notion vierge, ajo
 - [ ] Copier les 32 caractères avant le `?` → `NOTION_DATABASE_ID=...`
 
 ### Page parente pour les rapports automatiques
-Le pipeline crée 2 sous-pages Notion (Coûts API, Rapport quotidien) sous une page parente que tu choisis. Le plus simple : utiliser la page qui contient ta database "Veille IA".
+Le pipeline crée 2 sous-pages Notion (Coûts API, Rapport quotidien) sous une page parente que tu choisis. Le plus simple : utiliser la page qui contient ta database "[Ma Veille]".
 
-- [ ] Ouvrir la page Notion qui contient ta database (ou créer une page dédiée "Veille IA" si tu préfères)
-- [ ] **Partager cette page parente avec l'intégration** (⋯ → Connections → Veille IA Bot)
+- [ ] Ouvrir la page Notion qui contient ta database (ou créer une page dédiée "[Ma Veille]" si tu préfères)
+- [ ] **Partager cette page parente avec l'intégration** (⋯ → Connections → Veille Bot)
 - [ ] Récupérer son ID (32 chars dans l'URL) → `NOTION_PARENT_PAGE_ID=...`
 
 Les 2 IDs des sous-pages (`NOTION_COST_REPORT_PAGE_ID`, `NOTION_DAILY_REPORT_PAGE_ID`) seront générés plus tard par les scripts `setup_cost_report_page.py` et `setup_daily_report_page.py`.
@@ -84,7 +84,7 @@ Les 2 IDs des sous-pages (`NOTION_COST_REPORT_PAGE_ID`, `NOTION_DAILY_REPORT_PAG
 - [ ] **New project** → nom au choix, région proche de toi, mot de passe au choix
 - [ ] Attendre ~2 min que le projet soit provisionné
 - [ ] Dans le menu gauche : **Storage** → **New bucket**
-  - Name : `veille-ia-images`
+  - Name : `veille-images`
   - **Public bucket** : ✅ **ACTIVE** (obligatoire pour que Notion affiche les images)
   - Create bucket
 - [ ] Dans **Project Settings → API** :
@@ -101,8 +101,8 @@ Les 2 IDs des sous-pages (`NOTION_COST_REPORT_PAGE_ID`, `NOTION_DAILY_REPORT_PAG
 
 ### a) Adresse Gmail dédiée
 
-- [ ] Créer une nouvelle adresse Gmail (ex: `veille-ia-tonnom@gmail.com`) ou utiliser une existante
-- [ ] T'abonner à 4-8 newsletters IA. Suggestions :
+- [ ] Créer une nouvelle adresse Gmail (ex: `veille-tonnom@gmail.com`) ou utiliser une existante
+- [ ] T'abonner à 4-8 newsletters de ton sujet. Suggestions :
   - TLDR AI — https://tldr.tech/ai
   - Ben's Bites — https://bensbites.co/
   - The Neuron — https://www.theneurondaily.com/
@@ -116,14 +116,14 @@ Les 2 IDs des sous-pages (`NOTION_COST_REPORT_PAGE_ID`, `NOTION_DAILY_REPORT_PAG
 ### b) Projet Google Cloud
 
 - [ ] Aller sur https://console.cloud.google.com/
-- [ ] En haut, créer un **nouveau projet** → nom : `veille-ia`
+- [ ] En haut, créer un **nouveau projet** → nom : `veille-bot`
 - [ ] Menu ☰ → **APIs & Services** → **Library** → chercher `Gmail API` → **Enable**
 
 ### c) OAuth consent screen
 
 - [ ] Menu ☰ → **APIs & Services** → **OAuth consent screen**
 - [ ] **External** → Create
-- [ ] **App name** : `Veille IA Bot`
+- [ ] **App name** : `Veille Bot`
 - [ ] **User support email** : ton email
 - [ ] **Developer contact** : ton email → Save
 - [ ] **Scopes** → Add → cocher `https://www.googleapis.com/auth/gmail.readonly` → Update → Save
@@ -134,7 +134,7 @@ Les 2 IDs des sous-pages (`NOTION_COST_REPORT_PAGE_ID`, `NOTION_DAILY_REPORT_PAG
 - [ ] Menu ☰ → **APIs & Services** → **Credentials**
 - [ ] **+ Create Credentials** → **OAuth client ID**
 - [ ] Application type : **Desktop app**
-- [ ] Name : `veille-ia-desktop` → Create
+- [ ] Name : `veille-desktop` → Create
 - [ ] Dans la liste, clic sur l'icône **Download JSON** à droite de ton client
 - [ ] Renomme le fichier en `gmail_credentials.json` et place-le dans `config/gmail_credentials.json`
 
@@ -147,7 +147,7 @@ Les 2 IDs des sous-pages (`NOTION_COST_REPORT_PAGE_ID`, `NOTION_DAILY_REPORT_PAG
 
 ### f) Publier l'app en production (important)
 
-- [ ] Retourner sur https://console.cloud.google.com/ → ton projet `veille-ia`
+- [ ] Retourner sur https://console.cloud.google.com/ → ton projet `veille-bot`
 - [ ] Menu ☰ → **APIs & Services** → **OAuth consent screen** (ou "Google Auth Platform → Audience" dans la nouvelle UI)
 - [ ] Bouton **Publish app** → Confirm
 - [ ] Pas de review Google nécessaire pour le scope `gmail.readonly`
@@ -175,7 +175,7 @@ NOTION_API_KEY=ntn_...
 NOTION_DATABASE_ID=...
 SUPABASE_URL=https://xxxxx.supabase.co
 SUPABASE_SERVICE_KEY=eyJ...
-SUPABASE_BUCKET=veille-ia-images
+SUPABASE_BUCKET=veille-images
 
 # Gmail (fichiers JSON dans config/, pas dans .env)
 GMAIL_TOKEN_PATH=./config/gmail_token.json

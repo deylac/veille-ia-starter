@@ -21,7 +21,7 @@ Tu vas guider l'utilisateur dans l'installation complète de Veille IA. Suis ce 
 
 Présente-toi brièvement :
 
-> 👋 Salut ! Je vais t'aider à installer Veille IA, un pipeline qui va générer chaque matin des infographies + un carrousel Instagram à partir de l'actualité IA, et tout publier dans ta base Notion.
+> 👋 Salut ! Je vais t'aider à installer ton **système de veille automatisé**, un pipeline qui va générer chaque matin des infographies + un carrousel Instagram à partir de l'actualité de **TON sujet** (IA, marketing, crypto, design, finance, lifestyle... à toi de choisir), et tout publier dans ta base Notion.
 >
 > Tu vas avoir besoin de créer **3 comptes API** (Anthropic, OpenAI, Google), 1 compte Notion, 1 compte Supabase (gratuit) et 1 compte Railway (~5€/mois). Compte ~30 minutes pour tout configurer la première fois.
 >
@@ -30,6 +30,41 @@ Présente-toi brièvement :
 > 2. Tu veux installer en local seulement (pour tester) ou directement déployer sur Railway pour que ça tourne tous les jours en automatique ?
 
 Attends sa réponse, puis adapte le rythme. S'il a déjà des comptes, accélère sur ces étapes.
+
+### Étape 0 bis — Choisir le sujet de la veille (CRITIQUE)
+
+Ce starter est neutre : il fonctionne pour n'importe quelle thématique. Demande à l'utilisateur :
+
+> 🎯 **Sur quel sujet veux-tu faire ta veille automatique ?**
+>
+> Quelques exemples :
+> - "IA" (intelligence artificielle) — défaut, sources pré-configurées
+> - "Marketing digital" (HubSpot, Marketing Brew, etc.)
+> - "Cryptomonnaies" (CoinDesk, Bankless, etc.)
+> - "Design produit / UX"
+> - "Finance personnelle / investissement"
+> - "Lifestyle / productivité"
+> - Ou ton sujet à toi.
+
+Une fois qu'il te répond (ex: "Marketing digital"), tu adaptes tout :
+
+**A) Tu détermines 3 valeurs et tu les notes (à mettre dans `.env` à l'étape 3)** :
+- `TOPIC_NAME` : nom court capitalisable (ex: "Marketing", "Crypto", "Design")
+- `TOPIC_DESCRIPTION` : phrase pleine pour les prompts (ex: "marketing digital pour indépendants", "actualité crypto", "design produit et UX")
+- `BRAND_NAME` : nom de marque visible (ex: "Marketing Daily", "CryptoBrief", "Design Watch", ou simplement "Veille [TOPIC_NAME]")
+
+**B) Tu proposes des sources adaptées** au sujet (à appliquer à l'étape 6 dans `config/settings.py`) :
+- Pour les **RSS_FEEDS** : propose 4-8 RSS pertinents pour le sujet. Si l'user dit "marketing", suggère HubSpot Blog, Neil Patel, Marketing Brew, etc. Si "crypto", suggère CoinDesk, The Block, Bankless. Si "IA", garde la liste par défaut. Tu peux faire un `WebSearch` pour confirmer les URLs RSS exactes si tu n'es pas sûr.
+- Pour les **SUBREDDITS** : propose 3-5 subreddits actifs sur le sujet (ex: marketing → r/marketing, r/SEO, r/PPC).
+- Pour les **NEWSLETTER_SENDERS** : suggère 3-5 newsletters par email avec leurs adresses d'expéditeur exactes (ex: marketing → bensbites→marketing brew, the hustle, etc.). L'user devra s'y abonner avant que ça marche.
+
+**C) Tu adaptes l'AUDIENCE_DESCRIPTION** (variable libre) à la cible. Par défaut elle est générique mais l'idéal est qu'elle décrive précisément l'audience que l'user veut atteindre. Tu peux lui poser la question :
+
+> Pour calibrer le scoring viral, décris-moi l'audience à qui tu veux parler en 2 phrases (ex: "Freelances marketing francophones débutants à intermédiaires, qui galèrent à attirer des clients").
+
+Tu génères ensuite une `AUDIENCE_DESCRIPTION` complète (5-10 lignes) calquée sur la structure existante (audience cible + ce qui les fait réagir + ce qui les ennuie).
+
+**Note technique** : l'utilisateur peut SKIP cette étape et garder les défauts IA si c'est ce qu'il veut. Dans ce cas, ne touche pas à `RSS_FEEDS`, `SUBREDDITS`, `NEWSLETTER_SENDERS` (laisse les valeurs IA par défaut).
 
 ### Étape 1 — Vérifier Python + créer le venv
 
@@ -54,6 +89,16 @@ cp .env.example .env
 ```
 
 Demande à l'user : **« Ouvre `.env` dans un éditeur, on va le remplir ensemble étape par étape. »**
+
+**Si l'utilisateur a choisi un sujet à l'étape 0 bis**, dicte-lui dès maintenant les 3 lignes à ajouter (ou décommenter) en haut du `.env` :
+
+```
+TOPIC_NAME=Marketing
+TOPIC_DESCRIPTION=marketing digital
+BRAND_NAME=Marketing Daily
+```
+
+(Adapte aux valeurs choisies à l'étape 0 bis. S'il a gardé "IA" par défaut, ces 3 lignes peuvent rester commentées — les défauts du code sont déjà sur "IA".)
 
 ### Étape 3 — Anthropic (clé Claude)
 
@@ -106,6 +151,20 @@ Lis-lui le fichier `NOTION_SETUP.md` et guide-le pour créer la database avec le
 > - Partage cette page parent aussi avec l'intégration
 > - Copie l'ID de la page (32 chars dans l'URL)
 > - Colle dans `.env` à `NOTION_PARENT_PAGE_ID=…`
+
+### Étape 6 bis — Adapter les sources au sujet (uniquement si sujet ≠ IA)
+
+Si l'user a choisi un sujet ≠ IA à l'étape 0 bis, modifie **`config/settings.py`** pour mettre les sources adaptées :
+
+- Remplace `RSS_FEEDS` par les RSS pertinents pour son sujet (URLs trouvées via `WebSearch` si nécessaire — vérifie qu'elles renvoient bien du XML valide)
+- Remplace `SUBREDDITS` par les subreddits actifs sur le sujet
+- Remplace `NEWSLETTER_SENDERS` par les expéditeurs des newsletters auxquelles l'user va s'abonner
+
+**Important** : avant de toucher à `NEWSLETTER_SENDERS`, demande à l'user de :
+1. S'inscrire à 3-5 newsletters dans son sujet via son adresse Gmail dédiée
+2. Recevoir au moins 1 email de chacune (sinon `NEWSLETTER_SENDERS` ne fera rien remonter)
+
+Si l'user veut garder le défaut IA, **skip cette étape**.
 
 ### Étape 7 — Supabase (storage + cache + logs)
 

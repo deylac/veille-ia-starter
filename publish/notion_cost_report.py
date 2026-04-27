@@ -14,7 +14,7 @@ from typing import Any
 
 from notion_client import Client
 
-from config.settings import NOTION_API_KEY, TZ
+from config.settings import BRAND_NAME, NOTION_API_KEY, TZ
 from observability.api_logger import fetch_recent_calls
 
 logger = logging.getLogger(__name__)
@@ -27,7 +27,7 @@ def create_cost_report_page(parent_page_id: str) -> str:
         parent={"page_id": parent_page_id},
         properties={
             "title": {
-                "title": [{"text": {"content": "💰 Coûts API — Veille IA"}}]
+                "title": [{"text": {"content": f"💰 Coûts API — {BRAND_NAME}"}}]
             }
         },
     )

@@ -26,7 +26,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")  # gardé pour rollback éventuel
 NOTION_API_KEY = os.getenv("NOTION_API_KEY", "")
 NOTION_DATABASE_ID = os.getenv("NOTION_DATABASE_ID", "")
-# Page parente (ex: "Veille IA Superproductif") où setup_cost_report_page.py
+# Page parente (ex: "Veille [Mon Sujet]") où setup_cost_report_page.py
 # crée une sous-page une fois. Utilisé uniquement par le script de setup.
 NOTION_PARENT_PAGE_ID = os.getenv("NOTION_PARENT_PAGE_ID", "")
 # ID de la sous-page "Coûts API" générée par le setup. Mis à jour à chaque run
@@ -39,7 +39,7 @@ NOTION_DAILY_REPORT_PAGE_ID = os.getenv("NOTION_DAILY_REPORT_PAGE_ID", "")
 # === Reddit ===
 REDDIT_CLIENT_ID = os.getenv("REDDIT_CLIENT_ID", "")
 REDDIT_CLIENT_SECRET = os.getenv("REDDIT_CLIENT_SECRET", "")
-REDDIT_USER_AGENT = os.getenv("REDDIT_USER_AGENT", "veille-ia-bot/1.0")
+REDDIT_USER_AGENT = os.getenv("REDDIT_USER_AGENT", "veille-bot/1.0")
 
 # === Gmail (newsletters) ===
 # Service account JSON ou OAuth token. Voir NOTION_SETUP.md pour la mise en place.
@@ -89,25 +89,41 @@ NEWSLETTER_SENDERS = [
     "drstorm@substack.com",                        # Dr Joerg Storm
 ]
 
+# === Thématique de la veille (configurable par l'utilisateur) ===
+# Permet d'utiliser ce starter pour n'importe quel sujet (IA, marketing, crypto,
+# lifestyle, finance, design, etc.) sans toucher au code.
+# Modifie ces 3 variables (ici ou dans .env) selon ton sujet.
+TOPIC_NAME = os.getenv("TOPIC_NAME", "IA")
+# Court, sans accents, capitalisable. Affiché dans les images et titres.
+# Exemples : "IA", "Crypto", "Marketing", "Finance", "Design", "Lifestyle".
+
+TOPIC_DESCRIPTION = os.getenv("TOPIC_DESCRIPTION", "intelligence artificielle")
+# Phrase pleine pour les prompts. Exemples : "marketing digital", "cryptomonnaies",
+# "actualité économique", "design produit".
+
+BRAND_NAME = os.getenv("BRAND_NAME", f"Veille {TOPIC_NAME}")
+# Nom de marque visible dans les pages Notion et le footer des images.
+# Exemples : "Veille IA", "Marketing Daily", "CryptoBrief".
+
 # === Audience cible (pour le scoring) ===
-# Décrit l'audience pour que Claude calibre le scoring viral
-AUDIENCE_DESCRIPTION = """
+# Décrit l'audience pour que Claude calibre le scoring viral.
+# Personnalise selon ton sujet — c'est la clé pour avoir un scoring pertinent.
+AUDIENCE_DESCRIPTION = os.getenv("AUDIENCE_DESCRIPTION") or f"""
 Audience cible : freelances, indépendants, coachs et consultants francophones.
-Ils utilisent l'IA au quotidien dans leur business (création de contenu, automatisation,
-prospection, productivité). Ils ne sont pas développeurs, mais sont curieux et
-veulent rester à la pointe sans se noyer dans la technique.
+Ils s'intéressent à : {TOPIC_DESCRIPTION}.
+Ils ne sont pas experts techniques, mais sont curieux et veulent rester à la pointe
+sur ce sujet sans se noyer dans la complexité.
 
 Ce qui les fait réagir (score viral haut) :
-- Nouvelles features qui changent leur quotidien (ex : Claude Code, ChatGPT Memory)
-- Annonces de modèles plus performants ou moins chers
-- Cas d'usage business concrets et reproductibles
-- Drama et déclarations choc des grands acteurs (Sam Altman, Dario Amodei, etc.)
-- Comparaisons entre modèles ou outils
-- Stats impressionnantes sur l'adoption ou les performances
+- Nouveautés qui changent leur quotidien
+- Annonces majeures du secteur
+- Cas d'usage concrets et reproductibles
+- Prises de position et déclarations choc des grands acteurs
+- Comparaisons entre outils / approches
+- Stats impressionnantes
 
 Ce qui les ennuie (score bas) :
-- Papers de recherche ultra-techniques
-- Détails d'architecture (transformers, attention, etc.)
-- News de niche dev (nouveaux frameworks, libs)
-- Annonces corporate sans impact concret
+- Contenu trop technique ou académique
+- News corporate sans impact concret
+- Annonces de niche pour experts pointus
 """

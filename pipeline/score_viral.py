@@ -17,6 +17,8 @@ from config.settings import (
     CLAUDE_MODEL,
     MAX_NEWS_PER_DAY,
     MIN_VIRAL_SCORE,
+    TOPIC_DESCRIPTION,
+    TOPIC_NAME,
 )
 from observability.api_logger import log_api_call
 from pipeline.run_report import RunReport
@@ -46,11 +48,11 @@ def score_news(items: List[NewsItem], report: RunReport | None = None) -> List[N
 
     news_text = "\n---\n".join(news_blocks)
 
-    prompt = f"""Tu es un expert en stratégie de contenu IA pour audience francophone.
+    prompt = f"""Tu es un expert en stratégie de contenu sur le sujet : {TOPIC_DESCRIPTION}, pour audience francophone.
 
 {AUDIENCE_DESCRIPTION}
 
-Voici les news IA collectées dans les dernières 24h. Pour chacune, tu dois :
+Voici les news collectées dans les dernières 24h sur le sujet "{TOPIC_NAME}". Pour chacune, tu dois :
 1. Donner un score de potentiel viral de 1 à 10 (10 = explosif pour notre audience)
 2. Suggérer un angle éditorial percutant en français (1 phrase)
 3. Proposer un hook LinkedIn en français (1-2 lignes max, accrocheur)

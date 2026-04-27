@@ -93,6 +93,21 @@ Le bucket n'est pas public, ou tu utilises la `anon` key au lieu de la `service_
 ### Les images dans Notion sont inaccessibles (lien mort)
 Le bucket n'est pas public. Dans Supabase Storage → sélectionne le bucket → Settings → toggle "Public bucket" ON.
 
+### Pas de page "Rapport quotidien" mise à jour dans Notion / pas de coût qui s'affiche
+Cause probable : la table `daily_runs` ou `api_calls` n'existe pas. Va dans Supabase → SQL Editor et applique les 2 migrations :
+- `observability/migrations/001_api_calls.sql`
+- `observability/migrations/002_daily_runs.sql`
+
+Vérifie ensuite dans Table Editor que les 2 tables apparaissent. Le prochain run devrait remplir et publier dans Notion.
+
+### Le script `setup_cost_report_page.py` ou `setup_daily_report_page.py` échoue
+- Vérifie `NOTION_PARENT_PAGE_ID` dans `.env` (32 chars sans tirets, copié depuis l'URL de ta page parente)
+- Vérifie que ton intégration Notion est partagée sur cette page parente : ⋯ → Connections → Veille IA Bot
+- Si l'erreur persiste, recopie l'ID en enlevant tout caractère parasite
+
+### Les pages "Coûts API" ou "Rapport quotidien" existent mais ne se mettent plus à jour
+Vérifie que `NOTION_COST_REPORT_PAGE_ID` et `NOTION_DAILY_REPORT_PAGE_ID` dans `.env` correspondent bien aux IDs des sous-pages créées (et pas à la page parente). Si tu as supprimé une sous-page Notion, relance `python setup_cost_report_page.py` (ou `setup_daily_report_page.py`) pour en recréer une et coller le nouvel ID.
+
 ## Erreurs Railway
 
 ### `Unauthorized. Please run railway login again`

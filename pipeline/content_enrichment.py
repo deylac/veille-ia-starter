@@ -11,12 +11,14 @@ Workflow par news :
 """
 import json
 import logging
+import time
 from typing import Any, List
 
 from anthropic import Anthropic
 
 from config.models import NewsItem
 from config.settings import ANTHROPIC_API_KEY, AUDIENCE_DESCRIPTION, CLAUDE_MODEL
+from observability.api_logger import log_api_call
 
 logger = logging.getLogger(__name__)
 
@@ -70,28 +72,37 @@ avec accents parfaits, sans emoji, sans tirets cadratins.
 SCHÉMA EXACT (respecte les longueurs max, sinon le rendu visuel sera cassé) :
 
 {{
-  "titre": "TITRE EN MAJUSCULES AVEC ACCENTS",           // max 30 caractères
-  "sous_titre": "Phrase descriptive avec keywords",      // max 90 caractères
+  "titre": "TITRE EN MAJUSCULES AVEC ACCENTS",           // max 24 caractères
+  "sous_titre": "Phrase descriptive avec keywords",      // max 75 caractères
   "keywords_cyan": ["mot1", "mot2"],                     // 1-3 mots du sous_titre à mettre en cyan
   "stat": "73%",                                         // une stat marquante. Si pas de chiffre, utilise "NOUVEAU"
-  "stat_desc": "des freelances l'utilisent au quotidien",// max 50 caractères
+  "stat_desc": "des freelances l'utilisent au quotidien",// max 40 caractères
   "blocs": [                                             // EXACTEMENT 6 blocs
     {{
       "numero": "01",
-      "titre": "TITRE BLOC EN MAJUSCULES AVEC ACCENTS",  // max 40 caractères
+      "titre": "TITRE BLOC EN MAJUSCULES AVEC ACCENTS",  // max 32 caractères
       "points": [                                        // EXACTEMENT 4 puces
-        "Phrase courte et concrète",                     // max 60 caractères chacune
+        "Phrase courte et concrète",                     // max 48 caractères chacune
         "Deuxième info concrète",
         "Troisième info chiffrée",
         "Quatrième info actionnable"
       ],
-      "exemple": "Cas concret en une phrase italique"    // optionnel mais recommandé, max 90 chars
+      "exemple": "Cas concret en une phrase italique"    // optionnel mais recommandé, max 70 chars
     }},
     {{ "numero": "02", ...  }},
     ...
     {{ "numero": "06", ...  }}
   ]
 }}
+
+RÈGLES DE LONGUEUR (CRITIQUE — le moindre dépassement coupe visuellement le mot dans l'image rendue) :
+- VISE 40 CHARS par puce, pas 48. Ne joue jamais à la limite max.
+- Privilégie les phrases TÉLÉGRAPHIQUES : verbe d'action + chiffre + mot-clé. Pas d'articles superflus, pas de connecteurs ("ainsi", "par ailleurs", "notamment", "désormais").
+- Si une info riche ne tient pas en 48 chars, COUPE l'info au lieu de la condenser jusqu'à la limite. Mieux vaut une puce courte percutante qu'une puce dense tronquée.
+- Termes anglais (Business, ChatGPT, OpenAI, Anthropic) sont des mots indivisibles : vérifie qu'ils ne sont jamais en fin de ligne près de la limite max.
+- Exemple BIEN : "82,7 % vs 69,4 % sur workflows longs" (37 chars, télégraphique)
+- Exemple MAL : "82,7 % de précision sur les workflows longs contre 69,4 %" (59 chars, trop long, "%" coupé visuellement)
+- Idem pour titre, sous_titre, exemple : reste sous 80 % de la limite max.
 
 RÈGLE CRITIQUE SUR LES ACCENTS FRANÇAIS :
 Tu DOIS conserver TOUS les accents français dans les textes (é è ê ë à â ä ç ï î ô ö û ù ü ÿ œ æ),
@@ -161,12 +172,27 @@ def _enrich_one(client: Anthropic, item: NewsItem) -> dict[str, Any]:
         brief=item.editorial_brief or "(brief libre, produit l'infographie la plus pertinente)",
     )
 
-    response = client.messages.create(
-        model=CLAUDE_MODEL,
-        max_tokens=8000,
-        tools=[WEB_SEARCH_TOOL],
-        messages=[{"role": "user", "content": prompt}],
-    )
+    t0 = time.perf_counter()
+    try:
+        response = client.messages.create(
+            model=CLAUDE_MODEL,
+            max_tokens=8000,
+            tools=[WEB_SEARCH_TOOL],
+            messages=[{"role": "user", "content": prompt}],
+        )
+    except Exception as e:
+        log_api_call(
+            provider="anthropic",
+            model=CLAUDE_MODEL,
+            operation="messages.create",
+            duration_ms=int((time.perf_counter() - t0) * 1000),
+            success=False,
+            error=str(e),
+            context={"step": "enrichment", "news_title": item.title[:60]},
+        )
+        raise
+
+    duration_ms = int((time.perf_counter() - t0) * 1000)
 
     # Le response.content peut contenir : plusieurs text blocks (Claude commente parfois
     # entre ses recherches), server_tool_use, web_search_tool_result.
@@ -174,11 +200,15 @@ def _enrich_one(client: Anthropic, item: NewsItem) -> dict[str, Any]:
     # le bloc qui contient un JSON (commence par '{' après strip et nettoyage markdown).
     text_blocks: list[str] = []
     web_sources: list[str] = []
+    n_web_searches = 0
 
     for block in response.content:
         btype = getattr(block, "type", None)
         if btype == "text":
             text_blocks.append(block.text or "")
+        elif btype == "server_tool_use":
+            # Compte le nombre de recherches web réellement effectuées
+            n_web_searches += 1
         elif btype == "web_search_tool_result":
             results = getattr(block, "content", [])
             if isinstance(results, list):
@@ -188,6 +218,33 @@ def _enrich_one(client: Anthropic, item: NewsItem) -> dict[str, Any]:
                         web_sources.append(url)
 
     item.web_sources = web_sources
+
+    # Log l'appel principal Claude
+    log_api_call(
+        provider="anthropic",
+        model=CLAUDE_MODEL,
+        operation="messages.create",
+        duration_ms=duration_ms,
+        success=True,
+        input_tokens=getattr(response.usage, "input_tokens", None),
+        output_tokens=getattr(response.usage, "output_tokens", None),
+        context={
+            "step": "enrichment",
+            "news_title": item.title[:60],
+            "n_web_searches": n_web_searches,
+        },
+    )
+
+    # Log séparément chaque utilisation du tool web_search (facturé à part par Anthropic)
+    for _ in range(n_web_searches):
+        log_api_call(
+            provider="anthropic",
+            model="web_search_20250305",
+            operation="server_tool_use",
+            duration_ms=0,
+            success=True,
+            context={"step": "enrichment", "news_title": item.title[:60]},
+        )
 
     json_text = _extract_json(text_blocks)
     if not json_text:
@@ -230,11 +287,11 @@ def _extract_json(text_blocks: list[str]) -> str:
 def _validate_structured(data: dict[str, Any], item: NewsItem) -> dict[str, Any]:
     """Valide / nettoie les contraintes de longueur. Tronque sans crasher."""
     out = {
-        "titre": (data.get("titre") or item.title)[:30].upper(),
-        "sous_titre": (data.get("sous_titre") or "")[:90],
+        "titre": (data.get("titre") or item.title)[:24].upper(),
+        "sous_titre": (data.get("sous_titre") or "")[:75],
         "keywords_cyan": [str(k)[:30] for k in (data.get("keywords_cyan") or [])][:3],
         "stat": str(data.get("stat") or "NOUVEAU")[:8],
-        "stat_desc": (data.get("stat_desc") or "")[:50],
+        "stat_desc": (data.get("stat_desc") or "")[:40],
         "blocs": [],
     }
 
@@ -242,9 +299,9 @@ def _validate_structured(data: dict[str, Any], item: NewsItem) -> dict[str, Any]
     for b in blocs_raw[:6]:
         bloc = {
             "numero": str(b.get("numero", "")).zfill(2)[:2],
-            "titre": (b.get("titre") or "")[:40].upper(),
-            "points": [str(p)[:60] for p in (b.get("points") or [])][:4],
-            "exemple": (b.get("exemple") or "")[:90],
+            "titre": (b.get("titre") or "")[:32].upper(),
+            "points": [str(p)[:48] for p in (b.get("points") or [])][:4],
+            "exemple": (b.get("exemple") or "")[:70],
         }
         # Ne garder que les blocs avec au moins 2 puces (sinon visuellement vide)
         if len(bloc["points"]) >= 2:

@@ -1,6 +1,6 @@
 # Installation manuelle — Étape par étape
 
-Tutoriel complet pour installer le projet **sans** Claude Code. Si tu as Claude Code, préfère [SETUP_WITH_CLAUDE.md](SETUP_WITH_CLAUDE.md), c'est plus rapide.
+Tutoriel complet pour installer le projet **sans** Claude Code. Si tu as Claude Code, préfère lancer la commande `/onboard` dans le repo cloné — Claude te guide à travers tout ça automatiquement (cf. [README.md](README.md)).
 
 ## Sommaire
 
@@ -10,10 +10,11 @@ Tutoriel complet pour installer le projet **sans** Claude Code. Si tu as Claude 
 4. [Configuration locale](#4-configuration-locale)
 5. [Créer la database Notion](#5-créer-la-database-notion)
 6. [Configurer Gmail OAuth](#6-configurer-gmail-oauth)
-7. [Test local](#7-test-local)
-8. [Déploiement Railway](#8-déploiement-railway)
-9. [Publier l'app Google Cloud en production](#9-publier-lapp-google-cloud-en-production)
-10. [Vérification finale](#10-vérification-finale)
+7. [Setup Supabase + sous-pages Notion (rapports automatiques)](#7-setup-supabase--sous-pages-notion-rapports-automatiques)
+8. [Test local](#8-test-local)
+9. [Déploiement Railway](#9-déploiement-railway)
+10. [Publier l'app Google Cloud en production](#10-publier-lapp-google-cloud-en-production)
+11. [Vérification finale](#11-vérification-finale)
 
 ---
 
@@ -239,7 +240,42 @@ for m in results.get('messages', []):
 
 Récupère les adresses email entre `<...>` et adapte `NEWSLETTER_SENDERS` dans `config/settings.py`.
 
-## 7. Test local
+## 7. Setup Supabase + sous-pages Notion (rapports automatiques)
+
+À chaque run, le pipeline publie automatiquement dans Notion **2 sous-pages** :
+- 🗞️ **Rapport quotidien** : détail du run du jour + 6 jours en historique (toggles).
+  Si 0 image n'a été publiée, la page explique pourquoi (rejet scoring, etc.) — pas un bug.
+- 💰 **Coûts API** : suivi des coûts journaliers + projection mensuelle.
+
+### 7.1 Appliquer les migrations SQL Supabase
+
+Va dans Supabase → SQL Editor → New query, et colle successivement le contenu de :
+- `observability/migrations/001_api_calls.sql` (table `api_calls`)
+- `observability/migrations/002_daily_runs.sql` (table `daily_runs`)
+
+Clique **Run** pour chacune. Vérifie dans Table Editor que les 2 tables apparaissent.
+
+### 7.2 Récupérer l'ID de la page Notion parente
+
+Crée (ou identifie) la page Notion qui hébergera les 2 sous-pages. Partage-la avec ton intégration "Veille IA" (⋯ → Connections → Veille IA). Copie son ID (32 chars dans l'URL) dans `.env` :
+
+```bash
+NOTION_PARENT_PAGE_ID=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+### 7.3 Créer les 2 sous-pages
+
+```bash
+python setup_cost_report_page.py
+# → copie l'ID retourné dans .env à NOTION_COST_REPORT_PAGE_ID
+
+python setup_daily_report_page.py
+# → copie l'ID retourné dans .env à NOTION_DAILY_REPORT_PAGE_ID
+```
+
+Tu verras les 2 sous-pages apparaître dans Notion sous ta page parente. Elles seront vides au début, et remplies à chaque run du pipeline.
+
+## 8. Test local
 
 Teste sur 1 seule news pour valider (~3 min, ~0,25 €) :
 
@@ -273,7 +309,7 @@ python test_carousel.py
 
 Vérifie qu'une page "Carrousel du JJ/MM" apparaît dans ta database Notion avec les slides attachées.
 
-## 8. Déploiement Railway
+## 9. Déploiement Railway
 
 ### 8.1 Se connecter
 
@@ -340,7 +376,7 @@ railway status --json | python3 -c "import json,sys; d=json.load(sys.stdin); svc
 
 Tu dois voir `'cronSchedule': '0 4 * * *'` dans la sortie.
 
-## 9. Publier l'app Google Cloud en production
+## 10. Publier l'app Google Cloud en production
 
 **IMPORTANT** : sans cette étape, ton `refresh_token` Gmail expire après 7 jours et le bot casse.
 
@@ -351,7 +387,7 @@ Tu dois voir `'cronSchedule': '0 4 * * *'` dans la sortie.
 
 Pas de review Google nécessaire pour le scope `gmail.readonly`.
 
-## 10. Vérification finale
+## 11. Vérification finale
 
 Le prochain cron Railway se déclenchera à la prochaine échéance (4h UTC = 6h Paris été / 5h hiver).
 

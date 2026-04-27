@@ -69,6 +69,15 @@ Si tu préfères le faire à la main, crée une nouvelle page Notion vierge, ajo
 - [ ] Regarder l'URL : `https://www.notion.so/workspace/<DATABASE_ID>?v=...`
 - [ ] Copier les 32 caractères avant le `?` → `NOTION_DATABASE_ID=...`
 
+### Page parente pour les rapports automatiques
+Le pipeline crée 2 sous-pages Notion (Coûts API, Rapport quotidien) sous une page parente que tu choisis. Le plus simple : utiliser la page qui contient ta database "Veille IA".
+
+- [ ] Ouvrir la page Notion qui contient ta database (ou créer une page dédiée "Veille IA" si tu préfères)
+- [ ] **Partager cette page parente avec l'intégration** (⋯ → Connections → Veille IA Bot)
+- [ ] Récupérer son ID (32 chars dans l'URL) → `NOTION_PARENT_PAGE_ID=...`
+
+Les 2 IDs des sous-pages (`NOTION_COST_REPORT_PAGE_ID`, `NOTION_DAILY_REPORT_PAGE_ID`) seront générés plus tard par les scripts `setup_cost_report_page.py` et `setup_daily_report_page.py`.
+
 ## 5. Supabase — 5 min
 
 - [ ] Compte sur https://supabase.com/
@@ -81,6 +90,10 @@ Si tu préfères le faire à la main, crée une nouvelle page Notion vierge, ajo
 - [ ] Dans **Project Settings → API** :
   - Copier le **Project URL** → `SUPABASE_URL=https://xxxxx.supabase.co`
   - Copier la **service_role key** (PAS la anon key) → `SUPABASE_SERVICE_KEY=eyJ...`
+- [ ] **Appliquer les 2 migrations SQL** (essentielles pour les rapports automatiques) :
+  - SQL Editor → New query → coller le contenu de `observability/migrations/001_api_calls.sql` → Run
+  - Refaire avec `observability/migrations/002_daily_runs.sql`
+  - Vérifier dans Table Editor que les tables `api_calls` et `daily_runs` apparaissent
 
 > ⚠️ La `service_role` key a les pleins pouvoirs sur ton projet Supabase. Ne la commit jamais dans git.
 

@@ -5,12 +5,14 @@ poussent Gemini vers un rendu cohérent et professionnel.
 """
 import json
 import logging
+import time
 from typing import List
 
 from anthropic import Anthropic
 
 from config.models import NewsItem
 from config.settings import ANTHROPIC_API_KEY, CLAUDE_MODEL
+from observability.api_logger import log_api_call
 
 logger = logging.getLogger(__name__)
 
@@ -173,11 +175,22 @@ Règles :
 - Tous les textes doivent être en français, sauf les noms propres et les noms de produits
 - Les textes doivent être courts et impactants (respecter les limites mentionnées dans les templates)"""
 
+        t0 = time.perf_counter()
         try:
             response = client.messages.create(
                 model=CLAUDE_MODEL,
                 max_tokens=1000,
                 messages=[{"role": "user", "content": prompt}],
+            )
+            log_api_call(
+                provider="anthropic",
+                model=CLAUDE_MODEL,
+                operation="messages.create",
+                duration_ms=int((time.perf_counter() - t0) * 1000),
+                success=True,
+                input_tokens=getattr(response.usage, "input_tokens", None),
+                output_tokens=getattr(response.usage, "output_tokens", None),
+                context={"step": "format_selection", "news_title": item.title[:60]},
             )
             text = response.content[0].text.strip()
 
@@ -217,6 +230,15 @@ Règles :
             logger.info(f"Format '{format_name}' choisi pour : {item.title[:60]}")
 
         except Exception as e:
+            log_api_call(
+                provider="anthropic",
+                model=CLAUDE_MODEL,
+                operation="messages.create",
+                duration_ms=int((time.perf_counter() - t0) * 1000),
+                success=False,
+                error=str(e),
+                context={"step": "format_selection", "news_title": item.title[:60]},
+            )
             logger.error(f"Erreur sélection format pour '{item.title[:60]}' : {e}")
             # Fallback minimal
             item.visual_format = "annonce"

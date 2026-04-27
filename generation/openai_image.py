@@ -9,6 +9,7 @@ le contenu rendu sur l'image est en français.
 import base64
 import io
 import logging
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any, List
@@ -18,6 +19,7 @@ from PIL import Image
 
 from config.models import NewsItem
 from config.settings import DATA_DIR, OPENAI_API_KEY, OPENAI_IMAGE_MODEL
+from observability.api_logger import log_api_call
 
 logger = logging.getLogger(__name__)
 
@@ -151,6 +153,7 @@ def generate_images(items: List[NewsItem]) -> List[NewsItem]:
             logger.warning(f"Pas de contenu structuré pour : {item.title[:60]}, skip")
             continue
 
+        t0 = time.perf_counter()
         try:
             logger.info(f"Génération image {i+1}/{len(items)} : {item.title[:60]}")
 
@@ -168,6 +171,14 @@ def generate_images(items: List[NewsItem]) -> List[NewsItem]:
                 moderation="auto",
                 n=1,
             )
+            log_api_call(
+                provider="openai",
+                model=OPENAI_IMAGE_MODEL,
+                operation="images.generate",
+                duration_ms=int((time.perf_counter() - t0) * 1000),
+                success=True,
+                context={"step": "image_generation", "news_title": item.title[:60]},
+            )
 
             image_b64 = response.data[0].b64_json
             image_bytes = base64.b64decode(image_b64)
@@ -183,6 +194,15 @@ def generate_images(items: List[NewsItem]) -> List[NewsItem]:
             logger.info(f"  Image sauvegardée : {image_path}")
 
         except Exception as e:
+            log_api_call(
+                provider="openai",
+                model=OPENAI_IMAGE_MODEL,
+                operation="images.generate",
+                duration_ms=int((time.perf_counter() - t0) * 1000),
+                success=False,
+                error=str(e),
+                context={"step": "image_generation", "news_title": item.title[:60]},
+            )
             logger.error(f"Erreur génération image '{item.title[:60]}' : {type(e).__name__} : {e}")
 
     return [item for item in items if item.image_path]

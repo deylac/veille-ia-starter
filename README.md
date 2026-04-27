@@ -40,57 +40,90 @@ Cron Railway 6 h Paris
 
 Le **chef éditorial** (ajouté en v2) garantit zéro doublon thématique et des angles variés : si 3 news parlent de "GPT-5.5", il décide soit de les fusionner en une synthèse `debrief`, soit de produire des infographies différentes avec angles radicalement distincts (par ex. `comparaison` avec le concurrent + `analyse_outil` sur le modèle seul + `tutoriel` sur un cas d'usage).
 
-## Le flow d'installation en deux phases
+## 🚀 Installation guidée par Claude Code (recommandé)
 
-### Phase 1 — Créer tes comptes (1h à 1h30)
+Ce repo est conçu pour être installé en mode "guidé" par Claude Code — pas besoin de comprendre tout le code.
 
-**Avant de toucher au code**, crée tes comptes et récupère tes clés API. Suis [ACCOUNTS_CHECKLIST.md](ACCOUNTS_CHECKLIST.md) dans l'ordre — c'est une checklist de 7 services avec liens directs et cases à cocher.
+### En 3 étapes
 
-À la fin de cette phase tu auras :
-- ✅ Clés API : Anthropic, OpenAI, Gemini, Notion, Supabase
-- ✅ Fichier `gmail_credentials.json` téléchargé sur ta machine
-- ✅ Adresse Gmail dédiée avec quelques newsletters IA déjà abonnées
-- ✅ Compte Railway avec moyen de paiement
+```bash
+# 1. Cloner le repo
+git clone https://github.com/deylac/veille-ia-starter.git veille-ia
+cd veille-ia
 
-### Phase 2 — Installer avec Claude Code (30 min à 1h)
+# 2. Ouvrir dans Claude Code
+claude
+```
 
-Une fois les comptes prêts, tu ouvres Claude Code et tu colles **un seul prompt**. Claude Code t'accompagne ensuite pas à pas :
+```
+# 3. Dans Claude Code, taper :
+/onboard
+```
 
-- Vérif prérequis machine (Python, git, Railway CLI…)
-- Création de l'environnement virtuel + install des dépendances
-- Création du fichier `.env` avec tes clés
-- Création de la database Notion (via API, zéro typo)
-- Setup OAuth Gmail
-- Test local sur 1 news pour valider
-- Création de **ton propre repo GitHub privé**
-- Déploiement Railway avec cron quotidien
-- Publication de l'app Google Cloud en production
+Claude va te guider **pas à pas** sur 10 étapes (~30 min) :
+1. Vérification Python 3.11+
+2. Création du venv + install des dépendances
+3. Création de ta clé API Anthropic (Claude)
+4. Création de ta clé API OpenAI (gpt-image-2)
+5. Création de ta clé API Google Gemini
+6. Setup Notion (intégration + database + page parente)
+7. Setup Supabase (projet + bucket public + 2 migrations SQL)
+8. Création des 2 sous-pages Notion automatiques (Coûts API + Rapport quotidien)
+9. **Premier run de test** → ta 1re infographie publiée dans Notion 🎉
+10. Déploiement Railway (optionnel) pour le cron quotidien
 
-Suis [SETUP_WITH_CLAUDE.md](SETUP_WITH_CLAUDE.md).
+**Tu n'as RIEN à savoir techniquement** — Claude vérifie chaque étape avant de continuer et t'aide en cas de blocage.
+
+### Préparer en amont (optionnel)
+
+Si tu veux gagner du temps avant l'onboarding, tu peux créer en avance les comptes externes : suis [ACCOUNTS_CHECKLIST.md](ACCOUNTS_CHECKLIST.md). Sinon Claude t'envoie directement les bons liens au moment voulu.
+
+### Installation manuelle (sans Claude Code)
+
+Si tu préfères, tout est aussi décrit dans [INSTALL.md](INSTALL.md).
 
 ## Documentation
 
 | Fichier | Pour quoi |
 |---|---|
 | [README.md](README.md) | Vue d'ensemble (ce fichier) |
-| [ACCOUNTS_CHECKLIST.md](ACCOUNTS_CHECKLIST.md) | **Phase 1** — Créer les comptes et obtenir les clés |
-| [SETUP_WITH_CLAUDE.md](SETUP_WITH_CLAUDE.md) | **Phase 2** — Prompt à coller dans Claude Code pour l'installation technique |
-| [INSTALL.md](INSTALL.md) | Alternative manuelle si tu ne veux pas utiliser Claude Code |
+| [CLAUDE.md](CLAUDE.md) | Cartographie complète de l'app (architecture, modules, conventions) — lu auto par Claude Code |
+| [.claude/commands/onboard.md](.claude/commands/onboard.md) | Workflow d'installation guidée — déclenché par `/onboard` |
+| [ACCOUNTS_CHECKLIST.md](ACCOUNTS_CHECKLIST.md) | Liste des comptes externes à créer (avec liens directs) |
+| [INSTALL.md](INSTALL.md) | Installation manuelle (sans Claude Code) |
+| [SETUP_WITH_CLAUDE.md](SETUP_WITH_CLAUDE.md) | Notes complémentaires pour l'installation guidée |
+| [NOTION_SETUP.md](NOTION_SETUP.md) | Création de la base Notion + propriétés |
+| [DEPLOY.md](DEPLOY.md) | Déploiement Railway + configuration du cron |
 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | FAQ et résolution des erreurs fréquentes |
 
-## Coûts mensuels estimés
+## Reporting & monitoring
 
-- Anthropic API (scoring + enrichissement web_search) : ~15 €
-- OpenAI (gpt-image-2 pour les infographies) : ~43 €
-- Gemini (carrousel Instagram) : ~10 €
+Une fois installé, le pipeline publie automatiquement à chaque run **2 sous-pages Notion** dans ton espace :
+
+- **🗞️ Rapport quotidien** : aujourd'hui (synthèse + raisons des news retenues/rejetées) + 6 jours d'historique en toggles repliables. Utile pour comprendre pourquoi un jour 0 image n'a été publiée — réponse explicite "ce n'est pas un bug".
+- **💰 Coûts API** : coût d'aujourd'hui + cumul 7j + cumul 30j + projection mensuelle. Détail par modèle + par étape du pipeline.
+
+Tu peux aussi consulter en CLI :
+```bash
+python report_api_usage.py --days 30 --by model
+```
+
+## Coûts mensuels estimés (vérifiés sur facturation réelle)
+
+Calé sur facturation réelle observée fin avril 2026, pour un volume modéré (1-3 infographies/jour) :
+
+- Anthropic API (scoring + éditorial + enrichissement Claude + web_search) : ~5-15 €
+- OpenAI (gpt-image-2 — infographies) : ~5-15 €
+- Gemini (carrousel Instagram, ~5-7 slides/jour) : ~3-10 €
 - Railway (hébergement cron) : ~5 €
-- Supabase (hébergement images) : gratuit
-- **Total : ~70 € / mois** (pour ~10 infographies + 1 carrousel par jour)
+- Supabase (storage + tables, free tier suffit) : 0 €
+- Notion : 0 €
+- **Total : ~20-45 € / mois** (vérifie ta facture après 1 semaine de prod via la page Notion "Coûts API")
 
-Tu peux réduire :
-- Baisser `MAX_NEWS_PER_DAY` de 10 à 5 → ~40 € / mois
-- Désactiver le carrousel → ~55 € / mois
-- Utiliser `gpt-image-1` au lieu de `gpt-image-2` → ~25 € / mois
+Pour réduire :
+- Baisser `MAX_NEWS_PER_DAY` dans `config/settings.py`
+- Désactiver le carrousel (commenter la phase 7 de `main.py`) → -5 à -10 €/mois
+- Augmenter `MIN_VIRAL_SCORE` de 7 à 8 → moins d'enrichissements coûteux
 
 ## Support
 

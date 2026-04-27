@@ -16,12 +16,15 @@ Un seul appel Claude Sonnet 4.6 avec le batch complet.
 import copy
 import json
 import logging
+import time
 from typing import Any, List
 
 from anthropic import Anthropic
 
 from config.models import NewsItem
 from config.settings import ANTHROPIC_API_KEY, AUDIENCE_DESCRIPTION, CLAUDE_MODEL
+from observability.api_logger import log_api_call
+from pipeline.run_report import RunReport
 
 logger = logging.getLogger(__name__)
 
@@ -95,11 +98,14 @@ RÉPONDS UNIQUEMENT AVEC CE JSON VALIDE (pas de markdown, pas de prose) :
 Règles JSON : tous les accents français préservés, pas d'emoji, pas de tirets cadratins."""
 
 
-def direct_editorial(items: List[NewsItem]) -> List[NewsItem]:
+def direct_editorial(items: List[NewsItem], report: RunReport | None = None) -> List[NewsItem]:
     """Applique la direction éditoriale au batch de news scorées.
 
     En cas d'échec, retourne les items d'origine avec editorial_angle_type
     par défaut ("analyse_outil") pour ne pas bloquer le pipeline.
+
+    Si `report` est fourni, y pousse la décision éditoriale (selected, rejected,
+    reasoning) pour le rapport quotidien Notion.
     """
     if not items:
         return []
@@ -124,12 +130,23 @@ def direct_editorial(items: List[NewsItem]) -> List[NewsItem]:
         news_text=news_text,
     )
 
+    t0 = time.perf_counter()
     try:
         logger.info(f"Direction éditoriale sur {len(items)} news scorées...")
         response = client.messages.create(
             model=CLAUDE_MODEL,
             max_tokens=4000,
             messages=[{"role": "user", "content": prompt}],
+        )
+        log_api_call(
+            provider="anthropic",
+            model=CLAUDE_MODEL,
+            operation="messages.create",
+            duration_ms=int((time.perf_counter() - t0) * 1000),
+            success=True,
+            input_tokens=getattr(response.usage, "input_tokens", None),
+            output_tokens=getattr(response.usage, "output_tokens", None),
+            context={"step": "editorial_direction", "n_news": len(items)},
         )
         text = response.content[0].text.strip()
         if text.startswith("```"):
@@ -140,6 +157,15 @@ def direct_editorial(items: List[NewsItem]) -> List[NewsItem]:
 
         data = json.loads(text)
     except Exception as e:
+        log_api_call(
+            provider="anthropic",
+            model=CLAUDE_MODEL,
+            operation="messages.create",
+            duration_ms=int((time.perf_counter() - t0) * 1000),
+            success=False,
+            error=str(e),
+            context={"step": "editorial_direction", "n_news": len(items)},
+        )
         logger.error(f"Echec chef éditorial ({type(e).__name__}: {e}), fallback items d'origine")
         for it in items:
             it.editorial_angle_type = "analyse_outil"
@@ -159,6 +185,17 @@ def direct_editorial(items: List[NewsItem]) -> List[NewsItem]:
         item = _reconstruct_item(entry, items)
         if item:
             final_items.append(item)
+
+    # Pousser la décision au RunReport
+    if report is not None:
+        report.set_editorial({
+            "selected_count": len(final_items),
+            "selected_titles": [it.title[:200] for it in final_items],
+            "selected_angles": [it.editorial_angle_type for it in final_items],
+            "rejected_indices": rejected,
+            "rejected_titles": [items[i].title[:200] for i in rejected if 0 <= i < len(items)],
+            "reasoning": (reasoning or "")[:1000],
+        })
 
     if not final_items:
         logger.warning("Aucun item reconstruit, fallback items d'origine")

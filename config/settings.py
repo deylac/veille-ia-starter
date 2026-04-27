@@ -26,6 +26,15 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")  # gardé pour rollback éventuel
 NOTION_API_KEY = os.getenv("NOTION_API_KEY", "")
 NOTION_DATABASE_ID = os.getenv("NOTION_DATABASE_ID", "")
+# Page parente (ex: "Veille IA Superproductif") où setup_cost_report_page.py
+# crée une sous-page une fois. Utilisé uniquement par le script de setup.
+NOTION_PARENT_PAGE_ID = os.getenv("NOTION_PARENT_PAGE_ID", "")
+# ID de la sous-page "Coûts API" générée par le setup. Mis à jour à chaque run
+# par publish/notion_cost_report.py:update_cost_report_page().
+NOTION_COST_REPORT_PAGE_ID = os.getenv("NOTION_COST_REPORT_PAGE_ID", "")
+# ID de la sous-page "Rapport quotidien" générée par setup_daily_report_page.py.
+# Mise à jour à chaque run par publish/notion_daily_report.py.
+NOTION_DAILY_REPORT_PAGE_ID = os.getenv("NOTION_DAILY_REPORT_PAGE_ID", "")
 
 # === Reddit ===
 REDDIT_CLIENT_ID = os.getenv("REDDIT_CLIENT_ID", "")

@@ -9,6 +9,7 @@ Gemini ne supporte pas 1080x1350 nativement (ses sorties sont 1024x1024, 1024x15
 """
 import io
 import logging
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -18,6 +19,7 @@ from google.genai import types
 from PIL import Image
 
 from config.settings import DATA_DIR, GEMINI_API_KEY, GEMINI_IMAGE_MODEL
+from observability.api_logger import log_api_call
 
 logger = logging.getLogger(__name__)
 
@@ -166,11 +168,20 @@ def _build_outro_prompt(outro: dict[str, Any]) -> str:
 
 def _render_slide(client: genai.Client, prompt: str, date_str: str, idx: int, kind: str) -> str:
     """Génère une image Gemini, crop au ratio 4:5, sauvegarde en PNG."""
+    t0 = time.perf_counter()
     try:
         response = client.models.generate_content(
             model=GEMINI_IMAGE_MODEL,
             contents=prompt,
             config=types.GenerateContentConfig(response_modalities=["IMAGE"]),
+        )
+        log_api_call(
+            provider="google",
+            model=GEMINI_IMAGE_MODEL,
+            operation="generate_content",
+            duration_ms=int((time.perf_counter() - t0) * 1000),
+            success=True,
+            context={"step": "carousel_slide", "slide_idx": idx, "slide_kind": kind},
         )
         for part in response.candidates[0].content.parts:
             if part.inline_data and part.inline_data.data:
@@ -184,6 +195,15 @@ def _render_slide(client: genai.Client, prompt: str, date_str: str, idx: int, ki
         logger.warning(f"  Slide {idx:02d} ({kind}) : pas d'image dans la réponse")
         return ""
     except Exception as e:
+        log_api_call(
+            provider="google",
+            model=GEMINI_IMAGE_MODEL,
+            operation="generate_content",
+            duration_ms=int((time.perf_counter() - t0) * 1000),
+            success=False,
+            error=str(e),
+            context={"step": "carousel_slide", "slide_idx": idx, "slide_kind": kind},
+        )
         logger.error(f"  Slide {idx:02d} ({kind}) échec : {type(e).__name__} : {e}")
         return ""
 

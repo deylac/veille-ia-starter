@@ -14,6 +14,8 @@ Tu vas guider l'utilisateur dans l'installation complète de Veille IA. Suis ce 
 4. **Si l'user dit "skip" ou "déjà fait" pour une étape**, vérifie quand même que les pré-requis sont en place (ex: vérifier que la clé API est dans `.env`) avant de passer à la suite.
 5. **Tone amical et clair.** L'user n'est pas développeur, mais il est curieux. Évite le jargon, donne le "pourquoi" de chaque action.
 6. **Utilise les outils Bash/Read/Write/Edit** pour vérifier l'état réel du repo, pas tes suppositions.
+7. **Tu utilises les MCPs Notion et Supabase pour toutes les actions sur ces services.** Les MCPs sont un pré-requis annoncé à l'utilisateur (cf. la page Notion client). Si l'utilisateur n'a pas connecté le MCP Notion ou le MCP Supabase, **interromps l'onboarding** et demande-lui de les connecter via `/mcp` avant de continuer. **Tu ne demandes JAMAIS à l'user de faire à la main ce que tu peux faire toi-même via MCP.**
+8. **Une seule exception : le SQL Supabase.** L'application des migrations SQL Supabase reste manuelle pour l'utilisateur (étape 7.3 ci-dessous), parce qu'il n'y a pas d'API officielle fiable pour exécuter du DDL via REST. Tu lui dictes le SQL à coller, c'est tout.
 
 ## Workflow d'onboarding (10 étapes)
 
@@ -129,28 +131,42 @@ Vérifie ensuite avec un test rapide :
 > 2. "Create API key" — pas besoin de carte bancaire pour démarrer (free tier)
 > 3. Copie la clé, colle dans `.env` à `GEMINI_API_KEY=…`
 
-### Étape 6 — Notion (intégration + database + page parente)
+### Étape 6 — Notion (intégration + page parente + database)
 
-C'est l'étape la plus longue. Guide pas à pas :
+L'objectif : avoir une intégration Notion qui peut écrire dans son workspace, et une database avec les 11 propriétés exactes — **créée par toi, pas par l'user**.
 
-**6.1 Créer l'intégration**
+**6.1 Créer l'intégration interne (manuel — l'user clique)**
+
+C'est la seule action Notion qui ne peut pas être faite via API. Guide-le :
+
 > 1. Va sur https://www.notion.so/profile/integrations
-> 2. "+ New integration" → nom : "Veille IA", workspace : le tien
-> 3. Copie le **Internal Integration Secret** (commence par `secret_…`)
-> 4. Colle dans `.env` à `NOTION_API_KEY=…`
+> 2. "+ New integration" → nom : "Veille Bot" (ou ce que tu veux) → workspace : le tien → type : Internal
+> 3. Capabilities : Read content, Update content, Insert content
+> 4. Copie le **Internal Integration Secret** (commence par `secret_…` ou `ntn_…`)
+> 5. Colle-le dans `.env` à `NOTION_API_KEY=…`
 
-**6.2 Créer la base Notion**
+**6.2 Créer la page parente + la partager avec l'intégration (manuel — 30 secondes)**
 
-Lis-lui le fichier `NOTION_SETUP.md` et guide-le pour créer la database avec les bonnes propriétés. Une fois faite :
-> - Récupère l'ID de la database (32 chars dans l'URL)
-> - Colle dans `.env` à `NOTION_DATABASE_ID=…`
-> - **Important** : partage la database avec ton intégration "Veille IA" (clic ⋯ en haut à droite → Connections → Veille IA)
+> 1. Dans ton workspace Notion, crée une **page vide** avec le nom de ton choix (ex : "Veille Marketing", "Crypto Watch"…)
+> 2. Sur cette page, clic ⋯ en haut à droite → **Connections** → ajoute ton intégration
+> 3. Copie l'ID de la page (32 chars dans l'URL, sans tirets, avant le `?`)
+> 4. Colle-le dans `.env` à `NOTION_PARENT_PAGE_ID=…`
 
-**6.3 Récupérer l'ID de la page parente** (pour les sous-pages "Coûts API" + "Rapport quotidien")
-> - Crée une page parent "Veille IA" dans ton workspace si tu n'en as pas
-> - Partage cette page parent aussi avec l'intégration
-> - Copie l'ID de la page (32 chars dans l'URL)
-> - Colle dans `.env` à `NOTION_PARENT_PAGE_ID=…`
+**6.3 Créer la database avec les 12 propriétés (auto — TU le fais via MCP Notion)**
+
+À ce stade, tu as `NOTION_API_KEY` + `NOTION_PARENT_PAGE_ID` dans `.env` ET le MCP Notion connecté.
+
+**Tu utilises le MCP Notion** (`mcp__notion__notion-create-database` ou équivalent) pour créer la database sous `NOTION_PARENT_PAGE_ID`. Le contrat précis des 12 propriétés (noms, types, options de Select) est dans **`NOTION_SETUP.md`** — lis-le et applique-le exactement, le pipeline Python s'appuie sur ces noms et types.
+
+Le titre de la database doit être : `Veille {BRAND_NAME}` (ex : `Veille Marketing Daily`).
+
+Une fois créée :
+
+1. Récupère l'ID de la database (32 caractères, sans tirets)
+2. Écris-le dans `.env` à `NOTION_DATABASE_ID=…`
+3. Demande à l'user de rafraîchir sa page Notion → confirme visuellement que la database "Veille [BRAND_NAME]" est bien apparue avant de continuer
+
+> ⚠️ **Si le MCP Notion n'est pas connecté à la session :** STOP. Demande à l'user de le connecter via `/mcp` (cf. l'étape 3 du guide d'installation client). Sans ça, tu ne peux pas continuer l'onboarding sans demander à l'user de tout faire à la main, ce qui n'est pas le but.
 
 ### Étape 6 bis — Adapter les sources au sujet (uniquement si sujet ≠ IA)
 
@@ -168,30 +184,44 @@ Si l'user veut garder le défaut IA, **skip cette étape**.
 
 ### Étape 7 — Supabase (storage + cache + logs)
 
-**7.1 Créer le projet Supabase**
+**7.1 Créer le projet Supabase (manuel — l'user clique)**
+
 > 1. https://supabase.com → "Start your project" (gratuit)
 > 2. New project, région **eu-west-1** (Paris) ou la plus proche
-> 3. Settings → API → copie `URL` + `service_role` key
-> 4. Colle dans `.env` à `SUPABASE_URL=` et `SUPABASE_SERVICE_KEY=`
+> 3. Attends ~2 min que le projet finisse de provisionner
+> 4. Settings → API → copie `URL` + `service_role` key (PAS la anon key)
+> 5. Colle dans `.env` à `SUPABASE_URL=` et `SUPABASE_SERVICE_KEY=`
 
-**7.2 Créer le bucket d'images**
-> 1. Storage → New bucket → nom : `veille-ia-images`
-> 2. **PUBLIC bucket** (case à cocher) ← essentiel sinon Notion ne peut pas afficher les images
+**7.2 Créer le bucket d'images (auto — TU le fais via MCP Supabase)**
 
-**7.3 Appliquer les 2 migrations SQL**
+Utilise le MCP Supabase pour créer un bucket public nommé `veille-images` dans le projet de l'user.
 
-Affiche le contenu des 2 fichiers de migration :
+> 💡 Si l'user a choisi un autre nom de bucket, mets à jour `SUPABASE_BUCKET=…` dans `.env`. Par défaut : `veille-images`.
+
+> ⚠️ **Si le MCP Supabase n'est pas connecté :** STOP, demande à l'user de le connecter via `/mcp`.
+
+**7.3 Appliquer les 2 migrations SQL — étape MANUELLE assumée**
+
+> ⚠️ **Cette étape reste manuelle pour l'utilisateur, c'est la SEULE étape technique manuelle de tout l'onboarding.** Si le MCP Supabase de la session expose un outil d'exécution SQL DDL fiable, utilise-le et skip ce qui suit. Sinon (cas par défaut, beaucoup de MCPs Supabase n'exposent pas le DDL), guide l'user dans le SQL Editor :
+
+> 📋 **Étape manuelle (~1 min)** — tu vas coller 2 SQL dans Supabase :
+>
+> 1. Ouvre Supabase → **SQL Editor** → **New query**
+> 2. Affiche-toi le 1er SQL avec : `cat observability/migrations/001_api_calls.sql`
+> 3. Copie-colle son contenu dans le SQL Editor → clique **Run**
+> 4. Vérifie : "Success. No rows returned"
+> 5. Refais pareil avec le 2e fichier : `observability/migrations/002_daily_runs.sql`
+>
+> ✅ **Vérification** : dans Supabase → **Table Editor**, tu dois voir 2 nouvelles tables : `api_calls` et `daily_runs`. Si oui, c'est bon, on continue.
+
+Affiche le contenu des 2 fichiers à l'écran pour faciliter le copier-coller :
 
 ```bash
 cat observability/migrations/001_api_calls.sql
 cat observability/migrations/002_daily_runs.sql
 ```
 
-> Va dans Supabase → SQL Editor → New query → colle le contenu de la 1re migration → Run
-> Refais avec la 2e migration.
-
-Vérifie que les 2 tables existent :
-> Va dans Supabase → Table Editor → tu dois voir `api_calls` et `daily_runs`
+Attends que l'user te confirme avoir vu les 2 tables apparaître dans le Table Editor avant de continuer.
 
 ### Étape 8 — Créer les 2 sous-pages Notion (rapports automatiques)
 

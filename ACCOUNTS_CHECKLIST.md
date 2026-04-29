@@ -30,70 +30,43 @@ Si gpt-image-2 n'est pas disponible dans ta liste de modèles accessibles, conta
 
 Gemini 3 Pro Image est gratuit jusqu'à une certaine limite (~50 requêtes/min). Pour le carrousel quotidien tu restes largement dans la tranche gratuite au début.
 
-## 4. Notion — 10 min
+## 4. Notion — 5 min
 
-### Créer l'intégration
+### Créer l'intégration interne
 - [ ] Compte sur https://www.notion.so/ (si pas déjà)
 - [ ] Aller sur https://www.notion.so/profile/integrations
 - [ ] **+ New integration** → nom : `Veille Bot`, Type : **Internal**, workspace associé : ton workspace
 - [ ] Capabilities : **Read content** + **Update content** + **Insert content**
 - [ ] Submit → copier l'**Internal Integration Secret** → `NOTION_API_KEY=ntn_...` (ou `secret_...`)
 
-### Créer la database (via Claude Code)
-Le plus simple : demande à Claude Code de créer la database pour toi.
-Il utilisera l'API Notion pour créer les 11 propriétés exactes automatiquement.
+### Créer la page parente
+- [ ] Dans ton workspace, crée une **page vide** avec le nom de ton choix (ex : `Veille IA`, `Marketing Daily`, `Crypto Watch`)
+- [ ] **Partage cette page avec l'intégration** : clic ⋯ en haut à droite → **Connections** → ajouter **Veille Bot**
+- [ ] Récupérer l'ID de la page (32 chars dans l'URL, sans tirets, avant le `?`) → `NOTION_PARENT_PAGE_ID=...`
 
-Si tu préfères le faire à la main, crée une nouvelle page Notion vierge, ajoute une database inline dedans, puis ajoute ces 11 propriétés :
+### La database — créée automatiquement par Claude
 
-| Nom | Type | Options |
-|---|---|---|
-| Titre | Title | — |
-| Image générée | Files & media | — |
-| Source | Select | (vide au début) |
-| URL source | URL | — |
-| Score viral | Number | format: number |
-| Format utilisé | Select | infographie, carrousel, annonce, stat, citation, versus |
-| Hook suggéré FR | Text | — |
-| Angle éditorial | Text | — |
-| Statut | Select | À valider, Validé, Rejeté, Publié |
-| Freelance assigné | Person | — |
-| Date scan | Date | — |
-| Type de document | Select | infographie, carrousel |
+Tu n'as **rien à faire de plus**. Pendant `/onboard`, Claude créera la database (12 propriétés exactes) sous ta page parente via le MCP Notion. Spec dans [NOTION_SETUP.md](NOTION_SETUP.md) si tu veux la consulter.
 
-### Partager la database avec l'intégration
-- [ ] Ouvrir la database
-- [ ] Clic sur **...** en haut à droite → **Connections** → ajouter **Veille Bot**
+Pré-requis pour que ça marche : avoir le **MCP Notion connecté à Claude Code** (via `/mcp`). Sans lui, `/onboard` t'arrêtera et te demandera de le connecter.
 
-### Récupérer le DATABASE_ID
-- [ ] Ouvrir la database en pleine page
-- [ ] Regarder l'URL : `https://www.notion.so/workspace/<DATABASE_ID>?v=...`
-- [ ] Copier les 32 caractères avant le `?` → `NOTION_DATABASE_ID=...`
+Les 2 IDs des sous-pages (`NOTION_COST_REPORT_PAGE_ID`, `NOTION_DAILY_REPORT_PAGE_ID`) seront générés plus tard automatiquement par les scripts `setup_cost_report_page.py` et `setup_daily_report_page.py` que Claude lance pour toi.
 
-### Page parente pour les rapports automatiques
-Le pipeline crée 2 sous-pages Notion (Coûts API, Rapport quotidien) sous une page parente que tu choisis. Le plus simple : utiliser la page qui contient ta database "[Ma Veille]".
-
-- [ ] Ouvrir la page Notion qui contient ta database (ou créer une page dédiée "[Ma Veille]" si tu préfères)
-- [ ] **Partager cette page parente avec l'intégration** (⋯ → Connections → Veille Bot)
-- [ ] Récupérer son ID (32 chars dans l'URL) → `NOTION_PARENT_PAGE_ID=...`
-
-Les 2 IDs des sous-pages (`NOTION_COST_REPORT_PAGE_ID`, `NOTION_DAILY_REPORT_PAGE_ID`) seront générés plus tard par les scripts `setup_cost_report_page.py` et `setup_daily_report_page.py`.
-
-## 5. Supabase — 5 min
+## 5. Supabase — 3 min
 
 - [ ] Compte sur https://supabase.com/
 - [ ] **New project** → nom au choix, région proche de toi, mot de passe au choix
 - [ ] Attendre ~2 min que le projet soit provisionné
-- [ ] Dans le menu gauche : **Storage** → **New bucket**
-  - Name : `veille-images`
-  - **Public bucket** : ✅ **ACTIVE** (obligatoire pour que Notion affiche les images)
-  - Create bucket
 - [ ] Dans **Project Settings → API** :
   - Copier le **Project URL** → `SUPABASE_URL=https://xxxxx.supabase.co`
   - Copier la **service_role key** (PAS la anon key) → `SUPABASE_SERVICE_KEY=eyJ...`
-- [ ] **Appliquer les 2 migrations SQL** (essentielles pour les rapports automatiques) :
-  - SQL Editor → New query → coller le contenu de `observability/migrations/001_api_calls.sql` → Run
-  - Refaire avec `observability/migrations/002_daily_runs.sql`
-  - Vérifier dans Table Editor que les tables `api_calls` et `daily_runs` apparaissent
+
+### Le bucket et le SQL — gérés pendant `/onboard`
+
+- **Bucket d'images** : Claude le crée pour toi via le **MCP Supabase** pendant l'onboarding. Tu n'as rien à cliquer dans l'UI Storage.
+- **Migrations SQL** (création des tables `api_calls` et `daily_runs`) : c'est la **seule étape technique manuelle** restante. Pendant `/onboard`, Claude affichera le SQL à coller dans ton SQL Editor → tu colles → Run → c'est fini (~1 min).
+
+Pré-requis : avoir le **MCP Supabase connecté à Claude Code** (via `/mcp`). Sans lui, tu devras créer le bucket à la main.
 
 > ⚠️ La `service_role` key a les pleins pouvoirs sur ton projet Supabase. Ne la commit jamais dans git.
 

@@ -29,6 +29,22 @@ Le slash command `/onboard` se trouve dans `.claude/commands/onboard.md`.
 Documentation complémentaire : `INSTALL.md`, `ACCOUNTS_CHECKLIST.md`,
 `SETUP_WITH_CLAUDE.md`, `TROUBLESHOOTING.md`, `NOTION_SETUP.md`, `DEPLOY.md`.
 
+### Règle d'or pendant l'onboarding : MCP first
+
+Pour chaque action sur Notion ou Supabase pendant `/onboard`, Claude utilise les MCPs Notion et Supabase qui sont des **pré-requis annoncés à l'utilisateur** dans la page Notion d'install (le client les connecte avant de cloner le repo).
+
+- **Création de la database Notion 12 propriétés** → MCP Notion (`mcp__notion__notion-create-database`). Spec dans `NOTION_SETUP.md`.
+- **Sous-pages Coûts API + Rapport quotidien** → soit MCP Notion (création de pages), soit les scripts existants `setup_cost_report_page.py` + `setup_daily_report_page.py` qui utilisent la clé d'intégration interne.
+- **Bucket Supabase + paramètres projet** → MCP Supabase.
+
+**Si un MCP requis n'est pas connecté à la session** : STOP, interromps l'onboarding et demande à l'user de le connecter via `/mcp`. Tu ne demandes JAMAIS à l'user de faire à la main ce que tu peux faire toi-même.
+
+**Étapes manuelles légitimes pour l'user (incompressibles) :**
+- (a) Créer l'intégration Notion interne et copier la clé `secret_…` ou `ntn_…` (l'API Notion ne permet pas la création programmatique d'intégrations)
+- (b) Créer la page parente Notion + la partager avec l'intégration
+- (c) Créer le projet Supabase + copier `URL` et `service_role` key
+- (d) **Appliquer les 2 migrations SQL** via le SQL Editor Supabase (pas d'API DDL fiable, cf. `observability/migrations/*.sql`)
+
 ---
 
 ## 1. Vue d'ensemble

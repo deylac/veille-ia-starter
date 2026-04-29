@@ -43,9 +43,15 @@ Cron Railway 6 h Paris
 
 Le **chef éditorial** (ajouté en v2) garantit zéro doublon thématique et des angles variés : si 3 news parlent de "GPT-5.5", il décide soit de les fusionner en une synthèse `debrief`, soit de produire des infographies différentes avec angles radicalement distincts (par ex. `comparaison` avec le concurrent + `analyse_outil` sur le modèle seul + `tutoriel` sur un cas d'usage).
 
-## 🚀 Installation guidée par Claude Code (recommandé)
+## 🚀 Installation guidée par Claude Code
 
-Ce repo est conçu pour être installé en mode "guidé" par Claude Code — pas besoin de comprendre tout le code.
+Ce repo est conçu pour être installé en mode "guidé" par Claude Code — Claude crée la database Notion, le bucket Supabase et configure tout pour toi via les MCPs Notion + Supabase. **Tu n'as RIEN à savoir techniquement.**
+
+### Pré-requis (à faire avant de cloner)
+
+1. Créer 6 comptes : Anthropic, OpenAI, Google AI Studio, Notion, Supabase, GitHub. Suis [ACCOUNTS_CHECKLIST.md](ACCOUNTS_CHECKLIST.md) ou [la page Notion d'install client](https://www.notion.so/35076dcb9c4e81af8efcc564c065b957).
+2. Installer Claude Code et un abonnement Claude Pro.
+3. **Connecter les MCPs Notion + Supabase à Claude Code** via `/mcp`. Sans eux, l'onboarding ne pourra pas créer la database et le bucket pour toi.
 
 ### En 3 étapes
 
@@ -69,21 +75,15 @@ Claude va te guider **pas à pas** sur 10 étapes (~30 min) :
 3. Création de ta clé API Anthropic (Claude)
 4. Création de ta clé API OpenAI (gpt-image-2)
 5. Création de ta clé API Google Gemini
-6. Setup Notion (intégration + database + page parente)
-7. Setup Supabase (projet + bucket public + 2 migrations SQL)
+6. Setup Notion : tu crées juste l'intégration + une page parente, **Claude crée la database 12 propriétés via MCP Notion**
+7. Setup Supabase : tu crées juste le projet, **Claude crée le bucket via MCP Supabase**. Seule étape manuelle : coller 2 SQL dans le SQL Editor (~1 min, Claude affiche le contenu).
 8. Création des 2 sous-pages Notion automatiques (Coûts API + Rapport quotidien)
 9. **Premier run de test** → ta 1re infographie publiée dans Notion 🎉
 10. Déploiement Railway (optionnel) pour le cron quotidien
 
-**Tu n'as RIEN à savoir techniquement** — Claude vérifie chaque étape avant de continuer et t'aide en cas de blocage.
-
-### Préparer en amont (optionnel)
-
-Si tu veux gagner du temps avant l'onboarding, tu peux créer en avance les comptes externes : suis [ACCOUNTS_CHECKLIST.md](ACCOUNTS_CHECKLIST.md). Sinon Claude t'envoie directement les bons liens au moment voulu.
-
 ### Installation manuelle (sans Claude Code)
 
-Si tu préfères, tout est aussi décrit dans [INSTALL.md](INSTALL.md).
+Si tu préfères tout faire à la main, tout est aussi décrit dans [INSTALL.md](INSTALL.md).
 
 ## Documentation
 
@@ -95,7 +95,7 @@ Si tu préfères, tout est aussi décrit dans [INSTALL.md](INSTALL.md).
 | [ACCOUNTS_CHECKLIST.md](ACCOUNTS_CHECKLIST.md) | Liste des comptes externes à créer (avec liens directs) |
 | [INSTALL.md](INSTALL.md) | Installation manuelle (sans Claude Code) |
 | [SETUP_WITH_CLAUDE.md](SETUP_WITH_CLAUDE.md) | Notes complémentaires pour l'installation guidée |
-| [NOTION_SETUP.md](NOTION_SETUP.md) | Création de la base Notion + propriétés |
+| [NOTION_SETUP.md](NOTION_SETUP.md) | Spec interne (12 propriétés de la database) — utilisée par Claude pendant l'onboarding |
 | [DEPLOY.md](DEPLOY.md) | Déploiement Railway + configuration du cron |
 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | FAQ et résolution des erreurs fréquentes |
 
